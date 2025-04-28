@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+when running the Backend/Processor use the powershel command : cd backend/processor; mvn spring-boot:run
+when running the Backend/Listener use the powershel command : cd backend/listener; mvn spring-boot:run
+when running the Backend/shared-config use the powershel command : cd backend/shared-config; mvn spring-boot:run
+
+when running the Frontend use the powershel command : cd frontend; npm start

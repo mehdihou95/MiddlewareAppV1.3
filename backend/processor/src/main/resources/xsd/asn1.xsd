@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="shipment">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="header">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="asnNumber" type="xs:string"/>
+                            <xs:element name="shipmentDate" type="xs:date"/>
+                            <xs:element name="supplierId" type="xs:string"/>
+                            <xs:element name="supplierName" type="xs:string"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="lines">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="line" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="itemNumber" type="xs:string"/>
+                                        <xs:element name="quantity" type="xs:decimal"/>
+                                        <xs:element name="uom" type="xs:string"/>
+                                        <xs:element name="description" type="xs:string"/>
+                                    </xs:sequence>
+                                    <xs:attribute name="lineNumber" type="xs:integer" use="required"/>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema> 

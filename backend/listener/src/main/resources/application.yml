@@ -1,0 +1,80 @@
+# Server Configuration
+server:
+  port: 8081
+
+spring:
+  profiles:
+    include: shared
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin
+    virtual-host: /
+    connection-timeout: 10000
+    requested-heartbeat: 60
+    publisher-confirms: true
+    publisher-returns: true
+    template:
+      mandatory: true
+      retry:
+        enabled: true
+        max-attempts: 3
+        initial-interval: 1000
+        multiplier: 2.0
+        max-interval: 10000
+
+# AS2 Configuration
+as2:
+  serverId: MiddlewareAS2Server
+  serverHost: localhost
+  serverPort: 8081
+  keyStorePath: keystore.jks
+  keyStorePassword: password
+  privateKeyAlias: as2key
+  privateKeyPassword: password
+  requestSignature: true
+  requestEncryption: true
+  requestMdn: true
+  mdnSignature: true
+  processedDirectory: processed
+  errorDirectory: error
+  maxRetries: 3
+  retryDelay: 5000
+
+# Service-specific Logging
+logging:
+  level:
+    root: INFO
+    com.middleware: DEBUG
+    com.middleware.listener: DEBUG
+    com.middleware.shared.security: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.apache.camel: INFO
+    org.apache.camel.component.sftp: TRACE
+    org.apache.camel.support.DefaultComponent: DEBUG
+    com.middleware.listener.connectors.sftp: TRACE
+    com.middleware.listener.connectors.sftp.config.SftpCamelConfig: DEBUG
+    com.jcraft.jsch: TRACE
+    com.jcraft.jsch.Session: DEBUG
+    com.jcraft.jsch.Channel: DEBUG
+    com.jcraft.jsch.ChannelSftp: DEBUG
+    org.apache.camel.component.file.remote: TRACE
+
+# SFTP Configuration
+sftp:
+  enabled: true
+  host: localhost
+  port: 22
+  username: admin
+  password: admin
+  strictHostKeyChecking: false
+  monitoredDirectories: ["inbound"]
+  pollingInterval: 15000
+  connectionTimeout: 30000
+  maxRetries: 3
+  retryDelay: 5000
+  root: ./sftp_root
+  processedDirectory: processed
+  errorDirectory: error 

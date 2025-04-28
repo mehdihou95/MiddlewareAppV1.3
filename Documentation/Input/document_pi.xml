@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="document.xsl"?>
+<?xml-model href="document_pi.xsd"?>
+<?oxygen RNGSchema="document.rng" type="xml"?>
+<?xml-transform output="html"?>
+<Document>
+  <ProcessingInstructions>
+    This document contains examples of XML processing instructions.
+    Processing instructions provide instructions to applications that process the XML.
+  </ProcessingInstructions>
+  <Content>
+    <Title>Understanding XML Processing Instructions</Title>
+    <Body>
+      Processing instructions (PIs) are a special type of XML node that contain instructions
+      for applications processing the XML document. They are not part of the document's
+      character data but provide information to software reading the document.
+      
+      Common uses include:
+      - Stylesheet references (xml-stylesheet)
+      - Schema associations (xml-model)
+      - Editor-specific instructions (like the oxygen PI above)
+      - Application-specific directives
+      
+      Processing instructions have the form: &lt;?target instructions?&gt;
+      Where "target" identifies the application to which the instruction is directed,
+      and "instructions" contains the actual instructions.
+    </Body>
+  </Content>
+</Document>

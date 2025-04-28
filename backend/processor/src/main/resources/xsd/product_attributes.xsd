@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Product">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="ProductID" type="xs:string"/>
+        <xs:element name="ProductName" type="xs:string"/>
+        <xs:element name="Category" type="xs:string"/>
+        <xs:element name="Specifications">
+          <xs:complexType>
+            <xs:attribute name="weight" type="xs:decimal" use="required"/>
+            <xs:attribute name="height" type="xs:decimal" use="required"/>
+            <xs:attribute name="width" type="xs:decimal" use="required"/>
+            <xs:attribute name="depth" type="xs:decimal" use="required"/>
+            <xs:attribute name="color" type="xs:string" use="required"/>
+            <xs:attribute name="material" type="xs:string" use="required"/>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Pricing">
+          <xs:complexType>
+            <xs:attribute name="basePrice" type="xs:decimal" use="required"/>
+            <xs:attribute name="discount" type="xs:decimal" use="optional"/>
+            <xs:attribute name="currency" type="xs:string" use="required"/>
+            <xs:attribute name="taxRate" type="xs:decimal" use="required"/>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Inventory">
+          <xs:complexType>
+            <xs:attribute name="inStock" type="xs:boolean" use="required"/>
+            <xs:attribute name="quantity" type="xs:integer" use="required"/>
+            <xs:attribute name="warehouse" type="xs:string" use="required"/>
+            <xs:attribute name="reorderLevel" type="xs:integer" use="required"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="id" type="xs:ID" use="required"/>
+      <xs:attribute name="sku" type="xs:string" use="required"/>
+      <xs:attribute name="createdDate" type="xs:date" use="required"/>
+      <xs:attribute name="lastModified" type="xs:dateTime" use="required"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

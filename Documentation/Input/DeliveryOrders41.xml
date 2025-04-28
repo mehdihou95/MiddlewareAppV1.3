@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8'?>
+	<tns:Outbound xmlns:tns='http://schemas.esteve.com/LOGISTICA/ICOL/Outbound' xmlns:tns1='http://schemas.esteve.com/Logistica/SHARED/Depositante' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:xsd='http://www.w3.org/2001/XMLSchema'>
+		<tns:ICOL>7</tns:ICOL>
+		<tns:Customer>
+			<tns1:ICOL>7</tns1:ICOL>
+			<tns1:CodigoDepositante>300086</tns1:CodigoDepositante>
+		</tns:Customer>
+		<tns:Header>
+			<tns:DocumentType>GR</tns:DocumentType>
+			<tns:MovementType>02</tns:MovementType>
+			<tns:DeliveryNumber>C602/1</tns:DeliveryNumber>
+			<tns:DeliveryDate xsi:nil='true'/>
+			<tns:ShipToInfo>
+				<tns:ShipToID>11</tns:ShipToID>
+				<tns:ShipToName1>LOJA TELHEIRAS</tns:ShipToName1>
+				<tns:ShipToName2 />
+				<tns:ShipToVATNumber></tns:ShipToVATNumber><tns:ShipToAddress1>C.C. CONTINENTE TELHEIRAS</tns:ShipToAddress1>
+				<tns:ShipToAddress2 />
+				<tns:ShipToAddress3 />
+				<tns:ShipToZipCode>1600-528</tns:ShipToZipCode>
+				<tns:ShipToCity>TELHEIRAS</tns:ShipToCity></tns:ShipToInfo>
+			<tns:BillToInfo>
+				<tns:BillToID>11</tns:BillToID>
+				<tns:BillToName1>LOJA TELHEIRAS</tns:BillToName1>
+				<tns:BillToName2 />
+				<tns:BillToVATNumber></tns:BillToVATNumber>
+				<tns:BillToAddress1>C.C. CONTINENTE TELHEIRAS</tns:BillToAddress1>
+				<tns:BillToAddress2 />
+				<tns:BillToAddress3 />
+				<tns:BillToZipCode>1600-528</tns:BillToZipCode>
+				<tns:BillToCity>TELHEIRAS</tns:BillToCity>
+			</tns:BillToInfo>
+			<tns:COD>0</tns:COD>
+		</tns:Header>
+		<tns:Items><tns:Item>
+				<tns:ItemID>1</tns:ItemID>
+				<tns:ProductCode>KITSOFRESH</tns:ProductCode>
+				<tns:ProductDescription>KIT VIAGEM SO FRESH</tns:ProductDescription>
+				<tns:Quantity>8</tns:Quantity>
+				<tns:VATRate>23</tns:VATRate>
+				<tns:UnitPrice>0</tns:UnitPrice>
+			</tns:Item><tns:Item>
+				<tns:ItemID>2</tns:ItemID>
+				<tns:ProductCode>SOLUCAOSOFRESH</tns:ProductCode>
+				<tns:ProductDescription>SOLUCAO SO FRESH</tns:ProductDescription>
+				<tns:Quantity>24</tns:Quantity>
+				<tns:VATRate>23</tns:VATRate>
+				<tns:UnitPrice>2.05</tns:UnitPrice>
+			</tns:Item></tns:Items>
+	</tns:Outbound>

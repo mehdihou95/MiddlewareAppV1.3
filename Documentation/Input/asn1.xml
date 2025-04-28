@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shipment xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="backend/src/main/resources/shipment.xsd">
+    <header>
+        <asnNumber>ASN001234</asnNumber>
+        <shipmentDate>2024-03-16</shipmentDate>
+        <supplierId>SUPP001</supplierId>
+        <supplierName>ABC Suppliers Ltd</supplierName>
+    </header>
+    <lines>
+        <line lineNumber="1">
+            <itemNumber>ITEM001</itemNumber>
+            <quantity>10.0</quantity>
+            <uom>PCS</uom>
+            <description>Widget Type A</description>
+        </line>
+        <line lineNumber="2">
+            <itemNumber>ITEM002</itemNumber>
+            <quantity>5.5</quantity>
+            <uom>KG</uom>
+            <description>Raw Material B</description>
+        </line>
+        <line lineNumber="3">
+            <itemNumber>ITEM003</itemNumber>
+            <quantity>20.0</quantity>
+            <uom>BOX</uom>
+            <description>Component C</description>
+        </line>
+    </lines>
+</shipment>

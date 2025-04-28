@@ -1,0 +1,1311 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:Q1="http://schemas.esteve.com/Logistica/SHARED/InstanciaIcol" xmlns:Q2="http://schemas.esteve.com/LOGISTICA/ICOL/Outbound" xmlns:pref="http://schemas.esteve.com/Logistica/SHARED/Depositante" xmlns:Q3="http://schemas.esteve.com/Logistica/ICOL/InvoiceInfo" elementFormDefault="qualified" targetNamespace="http://schemas.esteve.com/LOGISTICA/ICOL/Outbound" version="1.0">
+    <import namespace="http://schemas.esteve.com/Logistica/SHARED/Depositante" schemaLocation="../../_schemas/LOGISTICA.SHARED.Depositante.xsd">
+	</import>
+	<import namespace="http://schemas.esteve.com/Logistica/SHARED/InstanciaIcol" schemaLocation="../../_schemas/LOGISTICA.SHARED.InstanciaIcol.xsd">
+	</import>
+	<import namespace="http://schemas.esteve.com/Logistica/ICOL/InvoiceInfo" schemaLocation="LOGISTICA.ICOL.InvoiceInfo.xsd"/>
+	<complexType name="LOGISTICA.ICOL.Outbound">
+		<sequence>
+			<element maxOccurs="1" minOccurs="0" name="ICOL" type="Q1:LOGISTICA.SHARED.InstanciaIcol"/>
+			<element maxOccurs="1" minOccurs="0" name="Customer" type="pref:LOGISTICA.SHARED.Depositante">
+				<annotation>
+					<documentation>RDL Customer</documentation>
+				</annotation>
+			</element>
+			<element maxOccurs="1" minOccurs="1" name="Header" nillable="false">
+				<annotation>
+					<documentation>
+						Header fields: ship to info, bill to info,
+						document info, etc..
+					</documentation>
+				</annotation>
+				<complexType>
+					<sequence>
+						<element maxOccurs="1" minOccurs="1" name="DocumentType">
+							<annotation>
+								<documentation>
+									Document type
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="4"/>
+								</restriction>
+							</simpleType>
+						</element>
+						<element maxOccurs="1" minOccurs="1" name="Valued">
+							<annotation>
+								<documentation>
+									Valued ('X': Yes, '': No)
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="1"/>
+								</restriction>
+							</simpleType>
+						</element>						
+						<element maxOccurs="1" minOccurs="1" name="MovementType">
+							<annotation>
+								<documentation>
+									Please contact Esteve IT for list of
+									possible values
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="2"/>
+								</restriction>
+							</simpleType>
+						</element>
+						<element maxOccurs="1" minOccurs="1" name="DeliveryNumber">
+							<annotation>
+								<documentation>
+									Delivery unique number. Must
+									uniquely identify the shipping
+									instruction
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="10"/>
+								</restriction>
+							</simpleType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="OrderNumber">
+							<annotation>
+								<documentation>
+									Associated order number
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="10"/>
+								</restriction>
+							</simpleType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="CustomerOrderNumber">
+							<annotation>
+								<documentation>
+									Associated external partner order number
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="20"/>
+								</restriction>
+							</simpleType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="Plant">
+							<annotation>
+								<documentation>
+									Source plant of the goods to be delivered
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="4"/>
+								</restriction>
+							</simpleType>
+						</element>												
+						<element maxOccurs="1" minOccurs="0" name="StorageLocation">
+							<annotation>
+								<documentation>
+									Identificator of the warehouse for external partner
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="8"/>
+								</restriction>
+							</simpleType>
+						</element>	
+						<element maxOccurs="1" minOccurs="0" name="SerializationType">
+							<annotation>
+								<documentation>
+									Identificator of the serialization type
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="15"/>
+								</restriction>
+							</simpleType>
+						</element>																								
+						<element maxOccurs="1" minOccurs="1" name="DeliveryDate" nillable="true" type="dateTime">
+							<annotation>
+								<documentation>
+									Delivery creation date (date part
+									only)
+								</documentation>
+							</annotation>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="ExpectedDeliveryDate" nillable="true" type="dateTime">
+							<annotation>
+								<documentation>
+									Expected date of delivery (date part
+									only)
+								</documentation>
+							</annotation>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="ExportFlag">
+							<annotation>
+								<documentation>
+									'X' flag for exports (out of EU, if EU is the origin)
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="1"/>
+								</restriction>
+							</simpleType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="PromotionalFlag">
+							<annotation>
+								<documentation>
+									'X' flag for all promotional materials delivery
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="1"/>
+								</restriction>
+							</simpleType>
+						</element>	
+						<element maxOccurs="1" minOccurs="0" name="CustomerType">
+							<annotation>
+								<documentation>
+									Customer group (SoldTo)
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="2"/>
+								</restriction>
+							</simpleType>
+						</element>							
+						<element maxOccurs="1" minOccurs="1" name="ShipToInfo">
+							<annotation>
+								<documentation>
+									Information on the delivery address
+								</documentation>
+							</annotation>
+							<complexType>
+								<sequence>
+									<element maxOccurs="1" minOccurs="1" name="ShipToID">
+										<annotation>
+											<documentation>
+												ShipTo point unique
+												identifier. Destination
+												address ID
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="20"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="ShipToName1">
+										<annotation>
+											<documentation>
+												Destination
+												person/company name
+												(parte 1). Although we have 2 fields for the Name, the total length for 2 fields is 85 chars.</documentation>
+										</annotation>
+										<simpleType>
+											<restriction
+												base="string">
+												<maxLength value="100" />
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="ShipToName2">
+										<annotation>
+											<documentation>
+												Destination
+												person/company name
+												(parte 2)
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="35"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="ShipToVATNumber">
+										<annotation>
+											<documentation>
+												Destination
+												person/company fiscal
+												number (mandatory for
+												transport documentation
+												purposes)
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="20"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="ShipToAddress1">
+										<annotation>
+											<documentation>
+												Destination
+												person/company
+												street/number (parte 1). Although we have 3 fields for the Address, the total length for 3 fields is 105 chars.
+
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction
+												base="string">
+												<maxLength value="105" />
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="ShipToAddress2">
+										<annotation>
+											<documentation>
+												Destination
+												person/company
+												street/number (parte 2)
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="35"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="ShipToAddress3">
+										<annotation>
+											<documentation>
+												Destination
+												person/company
+												street/number (parte 3)
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="35"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="ShipToZipCode">
+										<annotation>
+											<documentation>
+												Destination
+												person/company zip code
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="10"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="ShipToCity">
+										<annotation>
+											<documentation>
+												Destination
+												person/company town/city
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="35"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="ShipToCountry">
+										<annotation>
+											<documentation>
+												Destination
+												person/company country ISO code
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="3"/>
+											</restriction>
+										</simpleType>
+									</element>									
+									<element maxOccurs="1" minOccurs="0" name="ShipToTelephone">
+										<annotation>
+											<documentation>
+												Telephone in case of
+												need to contact or send
+												notification SMS (please
+												contact Esteve for
+												further info)
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="28"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="ShipToEmail">
+										<annotation>
+											<documentation>
+												Email for notifications
+												(please contact Esteve
+												for further info)
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="100">
+												</maxLength>
+											</restriction>
+										</simpleType>
+									</element>
+								</sequence>
+							</complexType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="BillToInfo">
+							<annotation>
+								<documentation>
+									Information on the billing address
+								</documentation>
+							</annotation>
+							<complexType>
+								<sequence>
+									<element maxOccurs="1" minOccurs="0" name="BillToID">
+										<annotation>
+											<documentation>
+												BillTo point unique
+												identifier. Invoice
+												receiver ID
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="20"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="BillToName1">
+										<annotation>
+											<documentation>
+												Billing person/company
+												name (parte 1). Although we have 2 fields for the Name, the total length for 2 fields is 85 chars.
+
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction
+												base="string">
+												<maxLength value="100" />
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="BillToName2">
+										<annotation>
+											<documentation>
+												Billing person/company
+												name (parte 2)
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="50"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="BillToVATNumber">
+										<annotation>
+											<documentation>
+												Billing person/company
+												fiscal number (mandatory
+												for Order to Cash
+												business)
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="20"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="BillToAddress1">
+										<annotation>
+											<documentation>
+												Billing person/company
+												street/number (part 1). Although we have 3 fields for the Address, the total length for 3 fields is 105 chars.
+
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction
+												base="string">
+												<maxLength value="105" />
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="BillToAddress2">
+										<annotation>
+											<documentation>
+												Billing person/company
+												street/number (part 2)
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="35"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="BillToAddress3">
+										<annotation>
+											<documentation>
+												Billing person/company
+												street/number (part 3)
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="35"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="BillToZipCode">
+										<annotation>
+											<documentation>
+												Billing person/company
+												zip code
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="10"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="BillToCity">
+										<annotation>
+											<documentation>
+												Billing person/company
+												town/city
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="35"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="BillToCountry">
+										<annotation>
+											<documentation>
+												Billing
+												person/company country ISO code
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="3"/>
+											</restriction>
+										</simpleType>
+									</element>									
+								</sequence>
+							</complexType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="TransportMethod" nillable="true" type="int">
+							<annotation>
+								<documentation>
+									Please contact Esteve IT for list of
+									possible values
+								</documentation>
+							</annotation>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="TransportMethodService" nillable="true" type="int">
+							
+							<annotation>
+								<documentation>
+									Please contact Esteve IT for list of
+									possible values
+								</documentation>
+							</annotation>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="Incoterms1">
+							<annotation>
+								<documentation>
+									Incoterms, part 1
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="3"/>
+								</restriction>
+							</simpleType>
+						</element>								
+						<element maxOccurs="1" minOccurs="0" name="Incoterms2">
+							<annotation>
+								<documentation>
+									Incoterms, part 2
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="28"/>
+								</restriction>
+							</simpleType>
+						</element>														
+						<element maxOccurs="1" minOccurs="0" name="CurrencyCode">
+							<annotation>
+								<documentation>
+									Document currency
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="3"/>
+								</restriction>
+							</simpleType>
+						</element>								
+						<element maxOccurs="1" minOccurs="0" name="Discount1" nillable="true" type="decimal">
+							<annotation>
+								<documentation>
+									Discount in percentage.
+								</documentation>
+							</annotation>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="Discount2" nillable="true" type="decimal">
+							<annotation>
+								<documentation>
+									Discount in percentage.
+								</documentation>
+							</annotation>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="Discount3" nillable="true" type="decimal">
+							<annotation>
+								<documentation>
+									Discount in percentage.
+								</documentation>
+							</annotation>
+						</element>						
+						<element maxOccurs="1" minOccurs="0" name="TransportSpecialNotes">
+							<annotation>
+								<documentation>
+									Special instructions for the
+									transport. E.g: contact info, time
+									restrictions
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="50"/>
+								</restriction>
+							</simpleType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="Observations1">
+							<annotation>
+								<documentation>
+									Special pick and pack instructions
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="60"/>
+								</restriction>
+							</simpleType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="Observations2">
+							<annotation>
+								<documentation>
+									Available text field
+								</documentation>
+							</annotation>
+							<simpleType>
+								<restriction base="string">
+									<maxLength value="512"/>
+								</restriction>
+							</simpleType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="FreeText1">
+							<annotation>
+								<documentation>
+									Available text field
+								</documentation>
+							</annotation>
+							<complexType>
+								<sequence>
+									<element maxOccurs="1" minOccurs="1" name="TextType">
+										<annotation>
+											<documentation>
+												Text type
+												AAI= Información general
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="3"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="FreeText">
+										<annotation>
+											<documentation>
+												Text
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction
+												base="string">
+												<maxLength value="512" />
+											</restriction>
+										</simpleType>
+									</element>
+
+								</sequence>
+							</complexType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="FreeText2">
+							<annotation>
+								<documentation>
+									Available text field
+								</documentation>
+							</annotation>
+							<complexType>
+								<sequence>
+									<element maxOccurs="1" minOccurs="1" name="TextType">
+										<annotation>
+											<documentation>
+												Text type
+												AAI= Información general
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="3"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="FreeText">
+										<annotation>
+											<documentation>
+												Text
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction
+												base="string">
+												<maxLength value="512" />
+											</restriction>
+										</simpleType>
+									</element>
+
+								</sequence>
+							</complexType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="FreeText3">
+							<annotation>
+								<documentation>
+									Available text field
+								</documentation>
+							</annotation>
+							<complexType>
+								<sequence>
+									<element maxOccurs="1" minOccurs="1" name="TextType">
+										<annotation>
+											<documentation>
+												Text type
+												AAI= Información general
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="3"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="FreeText">
+										<annotation>
+											<documentation>
+												Text
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction
+												base="string">
+												<maxLength value="512" />
+											</restriction>
+										</simpleType>
+									</element>
+
+								</sequence>
+							</complexType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="FreeText4">
+							<annotation>
+								<documentation>
+									Available text field
+								</documentation>
+							</annotation>
+							<complexType>
+								<sequence>
+									<element maxOccurs="1" minOccurs="1" name="TextType">
+										<annotation>
+											<documentation>
+												Text type
+												AAI= Información general
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="3"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="FreeText">
+										<annotation>
+											<documentation>
+												Text
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction
+												base="string">
+												<maxLength value="512" />
+											</restriction>
+										</simpleType>
+									</element>
+
+								</sequence>
+							</complexType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="FreeText5">
+							<annotation>
+								<documentation>
+									Available text field
+								</documentation>
+							</annotation>
+							<complexType>
+								<sequence>
+									<element maxOccurs="1" minOccurs="1" name="TextType">
+										<annotation>
+											<documentation>
+												Text type
+												AAI= Información general
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="3"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="FreeText">
+										<annotation>
+											<documentation>
+												Text
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction
+												base="string">
+												<maxLength value="512" />
+											</restriction>
+										</simpleType>
+									</element>
+
+								</sequence>
+							</complexType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="FreeText6">
+							<annotation>
+								<documentation>
+									Available text field
+								</documentation>
+							</annotation>
+							<complexType>
+								<sequence>
+									<element maxOccurs="1" minOccurs="1" name="TextType">
+										<annotation>
+											<documentation>
+												Text type
+												AAI= Información general
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="3"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="FreeText">
+										<annotation>
+											<documentation>
+												Text
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction
+												base="string">
+												<maxLength value="512" />
+											</restriction>
+										</simpleType>
+									</element>
+
+								</sequence>
+							</complexType>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="COD" nillable="true" type="decimal">
+							<annotation>
+								<documentation>
+									Charge On Delivery. Country currency
+									is assumed
+								</documentation>
+							</annotation>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="CreationUser" type="string">
+							<annotation>
+								<documentation>
+									Creation username
+								</documentation>
+							</annotation>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="SignedDocReturn" type="string">
+							<annotation>
+								<documentation>
+									"1" if transport document (invoice,
+									bill of ladder etc) is to be
+									returned signed by receiver, "0" if
+									not
+								</documentation>
+							</annotation>
+						</element>
+						<element maxOccurs="1" minOccurs="0" name="InvoiceInfo" type="Q3:LOGISTICA.ICOL.InvoiceInfo"/>
+
+					</sequence>
+				</complexType>
+
+			</element>
+			<element maxOccurs="1" minOccurs="1" name="Items">
+				<annotation>
+					<documentation>Delivery items</documentation>
+				</annotation>
+				<complexType>
+					<sequence>
+						<element maxOccurs="unbounded" minOccurs="1" name="Item" nillable="true">
+							<annotation>
+								<documentation>
+									Delivery item: one record per
+									product/batch/commercial conditions
+									(if applicable)
+								</documentation>
+							</annotation>
+							<complexType>
+								<sequence>
+									<element maxOccurs="1" minOccurs="1" name="ItemID">
+										<annotation>
+											<documentation>
+												Item unique identifier
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="10"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="ProductCode">
+										<annotation>
+											<documentation>
+												Product SKU
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="20"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="ProductDescription">
+										<annotation>
+											<documentation>
+												Product description. Although we acept 120 chars, Esteve will only consider 60 chars.
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="120"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="1" name="Quantity" nillable="true" type="decimal">
+										<annotation>
+											<documentation>
+												Total number of units to ship (free included)
+											</documentation>
+										</annotation>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="FreeQuantity" nillable="true" type="decimal">
+										<annotation>
+											<documentation>
+												Number of free units to ship
+											</documentation>
+										</annotation>
+									</element>									
+									<element maxOccurs="1" minOccurs="0" name="BaseUnit">
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="3"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="Batch">
+										<annotation>
+											<documentation>
+												Batch to ship. If
+												explicitly set, hard
+												allocation will be done,
+												otherwise soft
+												allocation. To use only
+												with products with batch
+												management
+											</documentation>
+										</annotation>
+										<simpleType>
+											<restriction base="string">
+												<maxLength value="50"/>
+											</restriction>
+										</simpleType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="VATRate" nillable="true" type="decimal">
+										<annotation>
+											<documentation>
+												VAT rate of the product.
+												E.g: 6, 13 or 23
+											</documentation>
+										</annotation>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="Discount1" nillable="true" type="decimal">
+										<annotation>
+											<documentation>
+												Item discount in
+												percentage.
+											</documentation>
+										</annotation>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="Discount2" nillable="true" type="decimal">
+										<annotation>
+											<documentation>
+												Item discount in
+												percentage.
+											</documentation>
+										</annotation>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="Discount3" nillable="true" type="decimal">
+										<annotation>
+											<documentation>
+												Item discount in
+												percentage.
+											</documentation>
+										</annotation>
+									</element>									
+									<element maxOccurs="1" minOccurs="0" name="UnitPrice" nillable="true" type="decimal">
+										<annotation>
+											<documentation>
+												Gross unit price for
+												units regarding this
+												delivery item
+											</documentation>
+										</annotation>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="FreeText1">
+										<annotation>
+											<documentation>
+												Available text field
+											</documentation>
+										</annotation>
+										<complexType>
+											<sequence>
+												<element maxOccurs="1" minOccurs="1" name="TextType">
+													<annotation>
+														<documentation>
+															Text type
+															AAI= Información general
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction base="string">
+															<maxLength value="3"/>
+														</restriction>
+													</simpleType>
+												</element>
+												<element maxOccurs="1" minOccurs="1" name="FreeText">
+													<annotation>
+														<documentation>
+															Text
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction
+															base="string">
+															<maxLength value="512" />
+														</restriction>
+													</simpleType>
+												</element>
+											</sequence>
+										</complexType>
+									</element>
+									<element maxOccurs="1" minOccurs="0" name="FreeText2">
+										<annotation>
+											<documentation>
+												Available text field
+											</documentation>
+										</annotation>
+										<complexType>
+											<sequence>
+												<element maxOccurs="1" minOccurs="1" name="TextType">
+													<annotation>
+														<documentation>
+															Text type
+															AAI= Información general
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction base="string">
+															<maxLength value="3"/>
+														</restriction>
+													</simpleType>
+												</element>
+												<element maxOccurs="1" minOccurs="1" name="FreeText">
+													<annotation>
+														<documentation>
+															Text
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction
+															base="string">
+															<maxLength value="512" />
+														</restriction>
+													</simpleType>
+												</element>
+											</sequence>
+										</complexType>
+									</element>									
+									<element maxOccurs="1" minOccurs="0" name="FreeText3">
+										<annotation>
+											<documentation>
+												Available text field
+											</documentation>
+										</annotation>
+										<complexType>
+											<sequence>
+												<element maxOccurs="1" minOccurs="1" name="TextType">
+													<annotation>
+														<documentation>
+															Text type
+															AAI= Información general
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction base="string">
+															<maxLength value="3"/>
+														</restriction>
+													</simpleType>
+												</element>
+												<element maxOccurs="1" minOccurs="1" name="FreeText">
+													<annotation>
+														<documentation>
+															Text
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction
+															base="string">
+															<maxLength value="512" />
+														</restriction>
+													</simpleType>
+												</element>
+											</sequence>
+										</complexType>
+									</element>									
+									<element maxOccurs="1" minOccurs="0" name="FreeText4">
+										<annotation>
+											<documentation>
+												Available text field
+											</documentation>
+										</annotation>
+										<complexType>
+											<sequence>
+												<element maxOccurs="1" minOccurs="1" name="TextType">
+													<annotation>
+														<documentation>
+															Text type
+															AAI= Información general
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction base="string">
+															<maxLength value="3"/>
+														</restriction>
+													</simpleType>
+												</element>
+												<element maxOccurs="1" minOccurs="1" name="FreeText">
+													<annotation>
+														<documentation>
+															Text
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction
+															base="string">
+															<maxLength value="512" />
+														</restriction>
+													</simpleType>
+												</element>
+											</sequence>
+										</complexType>
+									</element>									
+									<element maxOccurs="1" minOccurs="0" name="FreeText5">
+										<annotation>
+											<documentation>
+												Available text field
+											</documentation>
+										</annotation>
+										<complexType>
+											<sequence>
+												<element maxOccurs="1" minOccurs="1" name="TextType">
+													<annotation>
+														<documentation>
+															Text type
+															AAI= Información general
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction base="string">
+															<maxLength value="3"/>
+														</restriction>
+													</simpleType>
+												</element>
+												<element maxOccurs="1" minOccurs="1" name="FreeText">
+													<annotation>
+														<documentation>
+															Text
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction
+															base="string">
+															<maxLength value="512" />
+														</restriction>
+													</simpleType>
+												</element>
+											</sequence>
+										</complexType>
+									</element>									
+									<element maxOccurs="1" minOccurs="0" name="FreeText6">
+										<annotation>
+											<documentation>
+												Available text field
+											</documentation>
+										</annotation>
+										<complexType>
+											<sequence>
+												<element maxOccurs="1" minOccurs="1" name="TextType">
+													<annotation>
+														<documentation>
+															Text type
+															AAI= Información general
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction base="string">
+															<maxLength value="3"/>
+														</restriction>
+													</simpleType>
+												</element>
+												<element maxOccurs="1" minOccurs="1" name="FreeText">
+													<annotation>
+														<documentation>
+															Text
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction
+															base="string">
+															<maxLength value="512" />
+														</restriction>
+													</simpleType>
+												</element>
+											</sequence>
+										</complexType>
+									</element>	
+									<element maxOccurs="unbounded" minOccurs="0" name="TaxInfo">
+										<annotation>
+											<documentation>
+												Tax information line detail
+											</documentation>
+										</annotation>
+										<complexType>
+											<sequence>
+												<element maxOccurs="1" minOccurs="1" name="TaxCodeID">
+													<annotation>
+														<documentation>
+															Tax code - Identifies type of tax
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction base="string">
+															<maxLength value="4"/>
+														</restriction>
+													</simpleType>
+												</element>
+												<element maxOccurs="1" minOccurs="1" name="TaxName">
+													<annotation>
+														<documentation>
+															Tax code - Name
+														</documentation>
+													</annotation>
+													<simpleType>
+														<restriction base="string">
+															<maxLength value="20"/>
+														</restriction>
+													</simpleType>
+												</element>		
+												<element maxOccurs="1" minOccurs="1" name="TAXBase" type="decimal">
+													<annotation>
+														<documentation>
+															Base amount for calculation
+														</documentation>
+													</annotation>
+												</element>															
+												<element maxOccurs="1" minOccurs="0" name="TAXRate" type="decimal">
+													<annotation>
+														<documentation>
+															Rate (%)
+														</documentation>
+													</annotation>
+												</element>				
+												<element maxOccurs="1" minOccurs="1" name="TAXValue" type="decimal">
+													<annotation>
+														<documentation>
+															Calculated amount
+														</documentation>
+													</annotation>
+												</element>																			
+											</sequence>
+										</complexType>
+									</element>
+								</sequence>
+							</complexType>
+						</element>
+					</sequence>
+				</complexType>
+			</element>
+
+		</sequence>
+	</complexType>
+
+	<element name="Outbound" type="Q2:LOGISTICA.ICOL.Outbound"/>
+</schema>

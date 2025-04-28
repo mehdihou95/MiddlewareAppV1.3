@@ -1,0 +1,61 @@
+# Server Configuration
+server:
+  port: 8080
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  profiles:
+    include: shared
+  # File Upload Configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672
+    username: admin
+    password: admin
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 5000
+          max-attempts: 3
+          multiplier: 2
+    connection-factory:
+      concurrent-consumers: 3
+      max-concurrent-consumers: 10
+
+# Service-specific Logging
+logging:
+  level:
+    com.middleware.processor: DEBUG
+    com.middleware.processor.service: DEBUG
+    com.middleware.processor.service.impl: DEBUG
+    com.middleware.processor.service.strategy: DEBUG
+    com.middleware.processor.service.impl.XmlValidationServiceImpl: DEBUG
+    com.middleware.processor.service.impl.XmlProcessorServiceImpl: DEBUG
+    com.middleware.processor.service.strategy.AsnDocumentProcessingStrategy: DEBUG
+    org.springframework.web.multipart: DEBUG
+    org.springframework.transaction: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+    com.middleware.processor.config.CsrfTokenLoggingFilter: TRACE
+    javax.xml.validation: TRACE
+    org.xml.sax: TRACE
+
+# XML Validation Configuration
+xml:
+  validation:
+    entity-expansion-limit: ${XML_ENTITY_EXPANSION_LIMIT:0}  # 0 for unlimited
+    honour-all-schema-locations: true
+    enable-external-dtd: false
+    enable-external-schema: false
+    enable-schema-full-checking: false
+    max-memory-size: 10485760  # 10MB in bytes
+
+# SFTP Configuration
+sftp:
+  root: ${SFTP_ROOT:/sftp_root} 

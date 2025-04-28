@@ -1,0 +1,271 @@
+﻿COLUMN_NAME;DATA_TYPE;NULLABLE;DATA_DEFAULT;COMMENTS
+ORDER_ID;NUMBER(10,0);No;1;PK2, (Sequence Generated)
+CLIENT_ID;NUMBER(9,0);No;2;PK1, FK Reference to CLIENTS
+ORDER_NUMBER;VARCHAR2(50 CHAR);No;3;ASN Number
+CREATION_TYPE;NUMBER(2,0);No;;Creation Type - Indicates method by which the order was created e.g.. Import manual
+BUSINESS_PARTNER_ID;VARCHAR2(10 CHAR);Yes;;Supplier (Vendor)
+EXT_PURCHASE_ORDER;VARCHAR2(50 CHAR);Yes;;External system purchase order id
+CONS_RUN_ID;NUMBER(15,0);Yes;;Consolidation run ID
+O_FACILITY_ALIAS_ID;VARCHAR2(16 CHAR);Yes;;Origin facility alias ID
+O_FACILITY_ID;NUMBER(9,0);Yes;;Facility of the supplier where the PO goods are being shipped from
+O_DOCK_ID;VARCHAR2(8 CHAR);Yes;;Dock ID
+O_ADDRESS_1;VARCHAR2(75 CHAR);Yes;;First line of the origin address
+O_ADDRESS_2;VARCHAR2(75 CHAR);Yes;;Second line of the origin address
+O_ADDRESS_3;VARCHAR2(75 CHAR);Yes;;Third line of the origin address
+O_CITY;VARCHAR2(40 CHAR);Yes;;Origin City
+O_STATE_PROV;VARCHAR2(3 CHAR);Yes;;Origin State - ISO 3166-2 Country subdivision code
+O_POSTAL_CODE;VARCHAR2(10 CHAR);Yes;;Origin Postal Code
+O_COUNTY;VARCHAR2(40 CHAR);Yes;;Origin County
+O_COUNTRY_CODE;VARCHAR2(2 CHAR);Yes;;Origin country code - ISO 3166-1 Country code
+D_FACILITY_ALIAS_ID;VARCHAR2(16 CHAR);Yes;;Destination facility alias ID
+D_FACILITY_ID;NUMBER(9,0);Yes;;Destination facility ID
+D_DOCK_ID;VARCHAR2(8 CHAR);Yes;;Dock ID
+D_ADDRESS_1;VARCHAR2(75 CHAR);Yes;;First line of the destination address
+D_ADDRESS_2;VARCHAR2(75 CHAR);Yes;;Second line of the destination address
+D_ADDRESS_3;VARCHAR2(75 CHAR);Yes;;Third line of the destination address
+D_CITY;VARCHAR2(40 CHAR);Yes;;Destination city
+D_STATE_PROV;VARCHAR2(3 CHAR);Yes;;Destination state/province - ISO 3166-2 Country subdivision code
+D_POSTAL_CODE;VARCHAR2(10 CHAR);Yes;;Destination postal code
+D_COUNTY;VARCHAR2(40 CHAR);Yes;;Destination county
+D_COUNTRY_CODE;VARCHAR2(2 CHAR);Yes;;Destination country code - ISO 3166-1 Country code
+BILL_TO_NAME;VARCHAR2(91 CHAR);Yes;;Bill to information
+BILL_FACILITY_ALIAS_ID;VARCHAR2(16 CHAR);Yes;;Bill To Facility Alias Id
+BILL_FACILITY_ID;NUMBER(8,0);Yes;;Bill To Facility Id
+BILL_TO_ADDRESS_1;VARCHAR2(75 CHAR);Yes;;First address line of Bill To
+BILL_TO_ADDRESS_2;VARCHAR2(75 CHAR);Yes;;Second address line of Bill To
+BILL_TO_ADDRESS_3;VARCHAR2(75 CHAR);Yes;;Third address line of Bill To
+BILL_TO_CITY;VARCHAR2(50 CHAR);Yes;;Bill to city
+BILL_TO_STATE_PROV;VARCHAR2(3 CHAR);Yes;;Bill to state - ISO 3166-2 Country subdivision code
+BILL_TO_COUNTY;VARCHAR2(40 CHAR);Yes;;Bill to county
+BILL_TO_POSTAL_CODE;VARCHAR2(10 CHAR);Yes;;Bill to postal code
+BILL_TO_COUNTRY_CODE;VARCHAR2(2 CHAR);Yes;;Bill to country code - ISO 3166-1 Country code
+BILL_TO_PHONE_NUMBER;VARCHAR2(32 CHAR);Yes;;Bill to phone
+BILL_TO_FAX_NUMBER;VARCHAR2(30 CHAR);Yes;;Bill to FAX number
+BILL_TO_EMAIL;VARCHAR2(256 CHAR);Yes;;Bill to county
+INCOTERM_FACILITY_ID;NUMBER(8,0);Yes;;Inco term Location ID
+INCOTERM_FACILITY_ALIAS_ID;VARCHAR2(16 CHAR);Yes;;Inco term Location
+INCOTERM_LOC_AVA_DTTM;DATE;Yes;;Inco term Location Avl. Date
+INCOTERM_LOC_AVA_TIME_ZONE_ID;NUMBER(8,0);Yes;;Inco term Location Ava Time Zone ID
+PICKUP_TZ;NUMBER(4,0);No;9 ;Pickup time zone
+DELIVERY_TZ;NUMBER(4,0);No;9 ;Delivery time zone
+PICKUP_START_DTTM;DATE;Yes;;Pickup start date time
+PICKUP_END_DTTM;DATE;Yes;;Pickup end date time
+DELIVERY_START_DTTM;DATE;Yes;;Delivery start date
+DELIVERY_END_DTTM;DATE;Yes;;Delivery end date
+ORDER_DATE_DTTM;DATE;Yes;;Order Date
+ORDER_RECON_DTTM;DATE;Yes;;Order Reconciliation Date/time
+DSG_SERVICE_LEVEL_ID;NUMBER(12,0);Yes;;Designated Service Level ID
+DSG_CARRIER_ID;NUMBER(12,0);Yes;;Designated Carrier ID
+DSG_EQUIPMENT_ID;NUMBER(12,0);Yes;;Designated equipment for order. Defines a specific type of equipment to use for shipping this order. Planning components should respect this designation.
+DSG_TRACTOR_EQUIPMENT_ID;NUMBER(12,0);Yes;;Designated Tractor Equipment ID
+DSG_MOT_ID;NUMBER(12,0);Yes;;Designated Mode of transportation ID
+BASELINE_MOT_ID;NUMBER(12,0);Yes;;Base Line Mode of Transportation ID
+BASELINE_SERVICE_LEVEL_ID;NUMBER(12,0);Yes;;Base Line Service Level ID
+PRODUCT_CLASS_ID;NUMBER(8,0);Yes;;Product Class Id
+PROTECTION_LEVEL_ID;NUMBER(8,0);Yes;;Protection Level Id
+PATH_ID;NUMBER(10,0);Yes;;Path ID
+PATH_SET_ID;NUMBER(10,0);Yes;;Path Set ID
+DRIVER_TYPE_ID;NUMBER(12,0);Yes;;Driver Type Id
+UN_NUMBER_ID;NUMBER(12,0);Yes;;UN number ID
+BLOCK_AUTO_CREATE;NUMBER(1,0);No;0 ;Block Auto Create - Flag indicating the order should not be automatically created on shipments
+BLOCK_AUTO_CONSOLIDATE;NUMBER(1,0);No;0 ;Block Auto Consolidate - Flag indicating the order should not be automatically consolidated on shipments
+HAS_SPLIT;NUMBER(1,0);No;0 ;Flag to indicate whether the DO has been split
+IS_BOOKING_REQUIRED;NUMBER(1,0);No;0 ;Booking Required flag
+IS_CANCELLED;NUMBER(1,0);No;0 ;Is cancelled flag - flag indicating if the order is cancelled
+IS_HAZMAT;NUMBER(1,0);No;0 ;Is hazardous material
+IS_IMPORTED;NUMBER(1,0);No;0 ;Is imported flag
+IS_PARTIALLY_PLANNED;NUMBER(1,0);No;0 ;Is partially planned
+IS_PERISHABLE;NUMBER(1,0);No;0 ;Is Perishable - does order have perishable goods?
+IS_SUSPENDED;NUMBER(1,0);No;0 ;Is suspended - Indicates Whether the Order is Suspended for WM Import
+NORMALIZED_BASELINE_COST;NUMBER(13,4);Yes;;Normalized Base Line Cost - Baseline cost converted to the Shippers normalization currency
+BASELINE_COST_CURRENCY_CODE;VARCHAR2(3 CHAR);Yes;;Base Line Cost currency code
+ORIG_BUDG_COST;NUMBER(13,4);Yes;;Original Budgeted Cost - Transportation cost
+BUDG_COST;NUMBER(13,4);Yes;;Budgeted Cost
+ACTUAL_COST;NUMBER(13,4);Yes;;Actual Cost - transportation cost
+BASELINE_COST;NUMBER(13,4);Yes;;Base Line Cost -Least-expensive way to ship an order individually
+TRANS_RESP_CODE;VARCHAR2(3 CHAR);Yes;;Transportation Responsible Code - Code indicating the responsible party for the order
+BILLING_METHOD;NUMBER(2,0);Yes;;Freight Billing method - Prepaid or Collect
+PRIORITY;NUMBER(3,0);Yes;;Priority of the order
+EQUIPMENT_TYPE;NUMBER(4,0);Yes;;Equipment Type
+MV_CURRENCY_CODE;VARCHAR2(3 CHAR);Yes;;Monetary value currency code
+COMPARTMENT_NO;NUMBER(1,0);Yes;;Compartment No
+PACKAGING;VARCHAR2(15 CHAR);Yes;;Packaging - The Packaging of the order record. reference (logical no FK) to PACKAGING
+ORDER_LOADING_SEQ;NUMBER(8,0);Yes;;Loading Sequence
+REF_FIELD_1;VARCHAR2(25 CHAR);Yes;;Reference identifier
+REF_FIELD_2;VARCHAR2(25 CHAR);Yes;;Reference identifier
+REF_FIELD_3;VARCHAR2(25 CHAR);Yes;;Reference identifier
+CREATED_SOURCE_TYPE;NUMBER(2,0);No;1 ;Created by source type
+CREATED_SOURCE;VARCHAR2(50 CHAR);Yes;;Created by source
+CREATED_DTTM;TIMESTAMP(6);No;SYSTIMESTAMP ;Created Date
+LAST_UPDATED_SOURCE_TYPE;NUMBER(2,0);No;1 ;Last Updated Source Type - Audit field
+LAST_UPDATED_SOURCE;VARCHAR2(50 CHAR);Yes;;Last Updated Source - Audit field
+LAST_UPDATED_DTTM;TIMESTAMP(6);No;SYSTIMESTAMP ;Last updated date
+HIBERNATE_VERSION;NUMBER;Yes;;Hibernate Version
+ACTUAL_COST_CURRENCY_CODE;VARCHAR2(3 CHAR);Yes;;Actual Cost Currency Code
+BUDG_COST_CURRENCY_CODE;VARCHAR2(3 CHAR);Yes;;Budgeted Cost Currency Code
+BILL_TO_TITLE;VARCHAR2(50 CHAR);Yes;;The title of the party responsible for the bill for the order
+CHUTE_ID;VARCHAR2(10 CHAR);Yes;;Chute ID
+COD_FUNDS;VARCHAR2(4 CHAR);Yes;;"Used in Parcel Carrier shipping; Setting used to identify the suitable method of payment of COD charges."
+DC_CTR_NBR;VARCHAR2(32 CHAR);Yes;;DC Number
+DO_STATUS;NUMBER(3,0);No;110 ;Fulfillment status of the distribution order.
+DO_TYPE;NUMBER(2,0);Yes;;Denotes the type of order.
+DOCS_ONLY_SHPMT;VARCHAR2(4 CHAR);Yes;;Documents Only Shipment. Used in Parcel Carrier shipping.
+DUTY_AND_TAX;NUMBER(13,4);Yes;NULL;The tax and duty charges that will be assessed to this shipment if it is international. Used for international documentation.
+DUTY_TAX_ACCT_NBR;VARCHAR2(40 CHAR);Yes;;Field for the FedEx account number to be billed for the duty and tax for international shipments
+DUTY_TAX_PAYMENT_TYPE;NUMBER(1,0);Yes;NULL;Field to indicate the duty and tax payment type for FedEx international shipments
+EST_LPN;NUMBER(10,0);No;0 ;Total estimated number of LPNs required for the order. This value may change with updates to the order.
+EST_LPN_BRIDGED;NUMBER(10,0);No;0 ;Total estimated number of LPNs required for the order - interfaced from host. This value does not get updated
+FTSR_NBR;VARCHAR2(128 CHAR);Yes;;"FTSR Number; Code used for international shipping"
+IS_BACK_ORDERED;VARCHAR2(4 CHAR);No;'N' ;"Back ordered flag; Used for info./selection/display"
+O_PHONE_NUMBER;VARCHAR2(32 CHAR);Yes;;Origin facility phone number
+SHPNG_CHRG;NUMBER(11,2);No;0 ;The total charge invoiced to the customer. This is a summary of all the Freight Charges on the LPN
+STORE_NBR;VARCHAR2(40 CHAR);Yes;;Federated store number
+TOTAL_NBR_OF_LPN;NUMBER(7,0);No;0 ;Total Number of LPNs
+TOTAL_NBR_OF_PLT;NUMBER(7,0);No;0 ;Total number of pallets (informational)
+D_NAME;VARCHAR2(91 CHAR);Yes;;Destination First Name
+O_CONTACT;VARCHAR2(91 CHAR);Yes;;Origin contact name
+SECONDARY_MAXI_ADDR_NBR;VARCHAR2(8 CHAR);Yes;;The secondary address number for use in the Maxi code printed on UPS labels
+D_CONTACT;VARCHAR2(91 CHAR);Yes;;Destination contact name
+AES_ITN;VARCHAR2(15 CHAR);Yes;;Export declaration number
+BATCH_ID;NUMBER(13,0);Yes;;Batch Id
+ORIGIN_SHIP_THRU_FACILITY_ID;NUMBER(8,0);Yes;;Origin ship through FACILITY_ID
+ORIGIN_SHIP_THRU_FAC_ALIAS_ID;VARCHAR2(16 CHAR);Yes;;Origin ship through FACILITY_ALIAS_ID
+DEST_SHIP_THRU_FACILITY_ID;NUMBER(8,0);Yes;;Destination ship through FACILITY_ID
+DEST_SHIP_THRU_FAC_ALIAS_ID;VARCHAR2(16 CHAR);Yes;;Destination ship through FACILITY_ALIAS_ID
+ACTUAL_SHIPPED_DTTM;DATE;Yes;;Actual Shipped DTTM
+BILL_OF_LADING_NUMBER;VARCHAR2(30 CHAR);Yes;;Bill of lading number
+D_EMAIL;VARCHAR2(256 CHAR);Yes;;Destination Email
+D_FAX_NUMBER;VARCHAR2(30 CHAR);Yes;;Destination FAX number
+D_PHONE_NUMBER;VARCHAR2(32 CHAR);Yes;;Destination phone number
+PROD_SCHED_REF_NUMBER;VARCHAR2(30 CHAR);Yes;;Production Schedule Reference Number
+CANCEL_DTTM;DATE;Yes;;Distribution order canceled date time
+O_FACILITY_NAME;VARCHAR2(50 CHAR);Yes;;Facility Name
+O_DOCK_DOOR_ID;NUMBER(12,0);Yes;;Origin dock door
+O_FAX_NUMBER;VARCHAR2(30 CHAR);Yes;;Origin facility fax number
+O_EMAIL;VARCHAR2(256 CHAR);Yes;;Origin facility email id
+D_FACILITY_NAME;VARCHAR2(50 CHAR);Yes;;Facility Name
+D_DOCK_DOOR_ID;NUMBER(12,0);Yes;;Destination dock door
+CUSTOMER_ID;NUMBER(12,0);Yes;;Customer ID
+SCHED_PICKUP_DTTM;DATE;Yes;;The specific date/time the order should be picked up for shipping
+SCHED_DELIVERY_DTTM;DATE;Yes;;The specific date/time the order should be delivered to the customer.
+ZONE_SKIP_HUB_LOCATION_ID;NUMBER(8,0);Yes;;Represents the hub location to be assigned for the order if zone skipping/LTL pooling
+BILL_TO_FACILITY_NAME;VARCHAR2(50 CHAR);Yes;;Bill to Facility Name
+FREIGHT_CLASS;NUMBER(5,1);Yes;;Different types of products have different shipping costs associated with them. The motor carrier industry defines products being shipped according to certain characteristics: density, stowability, handling and liability.
+NON_MACHINEABLE;NUMBER(4,0);Yes;;Non Machineable?
+ASSIGNED_MOT_ID;NUMBER(12,0);Yes;;Mode of Transport of the distribution order
+ASSIGNED_CARRIER_ID;NUMBER(12,0);Yes;;Carrier assigned to the distribution order
+ASSIGNED_SERVICE_LEVEL_ID;NUMBER(12,0);Yes;;Service level assigned to the distribution order
+ASSIGNED_EQUIPMENT_ID;NUMBER(12,0);Yes;;Equipment assigned to the distribution order
+COMMODITY_CODE_ID;NUMBER(12,0);Yes;;Commodity code ID
+COD_AMOUNT;NUMBER(13,4);Yes;;Cash on Delivery Amount
+BILL_TO_CONTACT_NAME;VARCHAR2(50 CHAR);Yes;;Bill to Contact Name
+SHIP_GROUP_ID;VARCHAR2(15 CHAR);Yes;;Ship Group ID
+OVERRIDE_BILLING_METHOD;NUMBER(2,0);Yes;;Override Billing method
+PARENT_TYPE;NUMBER(1,0);No;0 ;Parent Type - Valid values are: 0-Normal, 1-Split, 2-Aggregated
+ACCT_RCVBL_CODE;VARCHAR2(2 CHAR);Yes;;Account receivable code (informational)
+ADVT_CODE;VARCHAR2(2 CHAR);Yes;;Used to fetch Address Record from Address Table
+IS_CUSTOMER_PICKUP;VARCHAR2(1 CHAR);Yes;;Is customer pickup
+IS_DIRECT_ALLOWED;VARCHAR2(1 CHAR);Yes;;Is direct allowed
+RTE_ATTR;VARCHAR2(30 CHAR);Yes;;Parameters for Static Routing Guide - passed from the host
+IS_ORDER_RECONCILED;NUMBER(1,0);No;0 ;Is order reconciled
+PRTL_SHIP_CONF_FLAG;NUMBER(1,0);No;0 ;Defines if Partial Ship Confirmation functionality should be invoked for this order
+PRTL_SHIP_CONF_STATUS;NUMBER(1,0);Yes;;Defines the status of the ship confirmation and if partial ship confirmation was done
+ALLOW_PRE_BILLING;NUMBER(1,0);No;0 ;Flag to check whether pre billing is allowed or not.
+LANE_NAME;VARCHAR2(50 CHAR);Yes;;The Routing Lane that should be used when performing transportation planning on the order. When matching to the routing guide, this will be used as input.
+DECLARED_VALUE;NUMBER(16,4);Yes;;Declared value of goods. Used for insurance accessorial calculation
+DV_CURRENCY_CODE;VARCHAR2(3 CHAR);Yes;;Currency code of the declared value.
+WEIGHT_UOM_ID_BASE;NUMBER(9,0);Yes;;ORDER_WEIGHT column is assumed to be the roll up from line item to the header in weight UOM Base. It would be always rolled up from line item and field will not be read during import
+LINE_HAUL_SHIP_VIA;VARCHAR2(4 CHAR);Yes;;Represents the line haul ship via to be assigned for the order if zone skipping/let pooling.
+ORIGINAL_ASSIGNED_SHIP_VIA;VARCHAR2(4 CHAR);Yes;;Specifies the Ship Via to be used when shipping the distribution order.
+DISTRIBUTION_SHIP_VIA;VARCHAR2(4 CHAR);Yes;;Distribution ship through facility
+DSG_SHIP_VIA;VARCHAR2(4 CHAR);Yes;;Shipping method as returned by the S and H engine
+TAX_ID;VARCHAR2(15 CHAR);Yes;;This serves as the Tax Identification for the recipient of the order
+IS_ORIGINAL_ORDER;NUMBER(1,0);Yes;;Indicates whether the distribution order is original or split. Displayed values: Yes/No.
+FREIGHT_FORWARDER_ACCT_NBR;VARCHAR2(10 CHAR);Yes;;The Freight Forwarder Account Number used in EDI and shipping documents
+IMPORTER_DEFN;VARCHAR2(1 CHAR);Yes;;Defines the Importer of international shipments. Valid values from system code S-605
+LANG_ID;VARCHAR2(3 CHAR);Yes;;The language associated with the order, used in printing the order report
+MAJOR_MINOR_ORDER;VARCHAR2(1 CHAR);Yes;;Flag indicating the order is a major order or not. Used in combining all child orders into one major order
+MAJOR_ORDER_CTRL_NBR;VARCHAR2(10 CHAR);Yes;;The order number associated with the major order
+ORDER_TYPE;VARCHAR2(20 CHAR);Yes;;Additional reference field that can be used in the rules to process the orders
+PACK_WAVE_NBR;VARCHAR2(50 CHAR);Yes;;The wave number of the associated packing wave
+PRE_STICKER_CODE;VARCHAR2(1 CHAR);Yes;;Used in LPN Consolidation logic to help determine how/if to set the Major Order Grouping Attribute
+PRIMARY_MAXI_ADDR_NBR;VARCHAR2(10 CHAR);Yes;;The primary address number for use in the Maxi code printed on UPS labels
+RTE_SWC_NBR;VARCHAR2(10 CHAR);Yes;;Updated by Routing, assigned during routing for all orders grouped together in routing using common routing attributes
+RTE_TO;VARCHAR2(10 CHAR);Yes;;Parameters for Static Routing Guide - passed from the host.  Defines the ship to used in the routing process
+RTE_WAVE_NBR;VARCHAR2(50 CHAR);Yes;;The wave number of the routing wave
+BASELINE_CARRIER_ID;NUMBER(12,0);Yes;;This column stores carrier_id when provided
+COD_RETURN_COMPANY_NAME;VARCHAR2(16 CHAR);Yes;;The company name used for Cash on Delivery (COD) returns
+BILL_ACCT_NBR;VARCHAR2(50 CHAR);Yes;;Billing account number
+CUST_BROKER_ACCT_NBR;VARCHAR2(10 CHAR);Yes;;Customs broker account number
+MANIFEST_NBR;VARCHAR2(20 CHAR);Yes;;The manifest the LPNs are associated with
+MARK_FOR;VARCHAR2(100 CHAR);Yes;;Used in printing the information in labels
+DELIVERY_OPTIONS;VARCHAR2(2 CHAR);Yes;;Delivery Options
+PRE_BILL_STATUS;VARCHAR2(2 CHAR);Yes;0;Indicates the Pre Bill Status for an Order.
+NBR_OF_CONTNT_LABEL;NUMBER(7,0);Yes;;indicates number of content labels
+NBR_OF_LABEL;NUMBER(7,0);Yes;;indicates the number of labels
+NBR_OF_PAKNG_SLIPS;NUMBER(7,0);Yes;;indicates number of packing slips
+FREIGHT_REVENUE_CURRENCY_CODE;VARCHAR2(3 CHAR);Yes;;Freight Revenue urrency code
+FREIGHT_REVENUE;NUMBER(13,4);Yes;;Freight Revenue
+TRANS_PLAN_DIRECTION;VARCHAR2(1 CHAR);Yes;;Determines which legs of an international multi-modal shipment need to be planned by the TLM system.
+DSG_VOYAGE_FLIGHT;VARCHAR2(50 CHAR);Yes;;Designated voyage or flight for the distribution order
+IS_D_POBOX;NUMBER(1,0);Yes;0;Determines if the destination address is a P.O. Box.
+REF_SHIPMENT_NBR;VARCHAR2(50 CHAR);Yes;;A reference to the shipment number to which the order must be assigned.All orders with the same reference number will be placed on the same shipment
+REF_STOP_SEQ;NUMBER(8,0);Yes;;Delivery stop sequence of the order on the shipment.
+HAZ_OFFEROR_NAME;VARCHAR2(101 CHAR);Yes;;The name of the hazardous materials offeror associated with the order.
+DISTRO_NUMBER;VARCHAR2(50 CHAR);Yes;;Stores the Distro number imported in by the host system.
+INCOTERM_ID;NUMBER(5,0);Yes;;Incoterms or International Commercial Terms are used to divide transaction costs and responsibilities between buyer and seller.
+DIRECTION;CHAR(1 CHAR);Yes;;Direction
+ORDER_SHIPMENT_SEQ;NUMBER(10,0);Yes;;Indicates the shipment sequence of the order in a multi modal scenario
+MOVEMENT_TYPE;VARCHAR2(2 CHAR);Yes;;"Defines the movement type; For example, Origin to destination (direct), Xdock to destination"
+ACCT_RCVBL_ACCT_NBR;VARCHAR2(10 CHAR);Yes;;Account Receivable Account Number - Used as an informational field during the label printing/substitution processes
+REF_FIELD_4;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 4. Reserved for custom use
+REF_FIELD_5;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 5. Reserved for custom use
+REF_FIELD_6;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 6. Reserved for custom use
+REF_FIELD_7;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 7. Reserved for custom use
+REF_FIELD_8;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 8. Reserved for custom use
+REF_FIELD_9;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 9. Reserved for custom use
+REF_FIELD_10;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 10. Reserved for custom use
+REF_NUM1;NUMBER(13,5);Yes;;Stores the Reference Number 1. Reserved for custom use
+REF_NUM2;NUMBER(13,5);Yes;;Stores the Reference Number 2. Reserved for custom use
+REF_NUM3;NUMBER(13,5);Yes;;Stores the Reference Number 3. Reserved for custom use
+REF_NUM4;NUMBER(13,5);Yes;;Stores the Reference Number 4. Reserved for custom use
+REF_NUM5;NUMBER(13,5);Yes;;Stores the Reference Number 5. Reserved for custom use
+SPL_INSTR_CODE_1;VARCHAR2(15 CHAR);Yes;;Stores the Special Instructions 1. Populated from Sys code B 736.
+SPL_INSTR_CODE_2;VARCHAR2(15 CHAR);Yes;;Stores the Special Instructions 2. Populated from Sys code B 736.
+SPL_INSTR_CODE_3;VARCHAR2(15 CHAR);Yes;;Stores the Special Instructions 3. Populated from Sys code B 736.
+SPL_INSTR_CODE_4;VARCHAR2(15 CHAR);Yes;;Stores the Special Instructions 4. Populated from Sys code B 736.
+SPL_INSTR_CODE_5;VARCHAR2(15 CHAR);Yes;;Stores the Special Instructions 5. Populated from Sys code B 736.
+SPL_INSTR_CODE_6;VARCHAR2(15 CHAR);Yes;;Stores the Special Instructions 6. Populated from Sys code B 736.
+SPL_INSTR_CODE_7;VARCHAR2(15 CHAR);Yes;;Stores the Special Instructions 7. Populated from Sys code B 736.
+SPL_INSTR_CODE_8;VARCHAR2(15 CHAR);Yes;;Stores the Special Instructions 8. Populated from Sys code B 736.
+SPL_INSTR_CODE_9;VARCHAR2(15 CHAR);Yes;;Stores the Special Instructions 9. Populated from Sys code B 736.
+SPL_INSTR_CODE_10;VARCHAR2(15 CHAR);Yes;;Stores the Special Instructions 10. Populated from Sys code B 736.
+TOTAL_NBR_OF_UNITS;NUMBER(15,4);Yes;;Sum of quantity in base UOM if all base UOMs are the same
+DSG_TRAILER_NUMBER;VARCHAR2(20 CHAR);Yes;;Specifies the trailer number to be used when shipping the  order
+UPSMI_COST_CENTER;VARCHAR2(35 CHAR);Yes;;The cost center prints on the Mail Innovations label and shipment control form.  It is also used by UPS when invoicing mail innovations shipments
+CHASE_ELIGIBLE;NUMBER(1,0);No;0 ;Flag that indicates whether there is any packing shorts for this order that can be chased.
+SHIPPING_CHANNEL;VARCHAR2(15 CHAR);Yes;;Indicates the Shipping channel to negotiate different ship rate slabs with the carriers.
+IS_GUARANTEED_DELIVERY;NUMBER(1,0);No;0 ;Indicates the order is marked for guaranteed delivery if set to 1.
+FAILED_GUARANTEED_DELIVERY;VARCHAR2(15 CHAR);No;'-1' ;Indicates the order is flagged as cannot meet the promised delivery date if set to 1.
+EPI_SERVICE_GROUP;VARCHAR2(15 CHAR);Yes;;The rate shop group of the 3rd party parcel system.
+IMPORTER_OF_RECORD_NBR;VARCHAR2(25 CHAR);Yes;;The importer of record number is used for international shipping to track the entity responsible for importing the goods associated to the order.
+B13A_EXPORT_DECL_NBR;VARCHAR2(25 CHAR);Yes;;This is used when the order is shipped from Canada. Canada requires for all goods that require an Export Declaration (B13 A) prior to leaving Canada.
+RETURN_ADDR_CODE;VARCHAR2(23 CHAR);Yes;;This is required so that there is a reference to the return facility tracked on the Address Key for the return facility. This will be used when the return facility is different than the origin facility.
+CHANNEL_TYPE;NUMBER(4,0);Yes;;
+STATIC_ROUTE_DELIVERY_TYPE;VARCHAR2(15 CHAR);Yes;;
+ASSIGNED_CARRIER_CODE;VARCHAR2(8 CHAR);Yes;;Assigned Carrier Code
+DSG_CARRIER_CODE;VARCHAR2(8 CHAR);Yes;;Designated Carrier Code
+SOURCE_ORDER;VARCHAR2(50 CHAR);Yes;;Order Id of the source order
+AUTO_APPOINTMENT;NUMBER(1,0);No;0 ; Auto Appointment 
+BASELINE_LINEHAUL_COST;NUMBER(13,4);Yes;;Baseline line haul cost
+BASELINE_ACCESSORIAL_COST;NUMBER(13,4);Yes;;Baseline accessorial cost 
+DELIVERY_CHANNEL_ID;NUMBER(4,0);Yes;;Delivery channel id for DO page
+ORDER_STREAM;NUMBER(1,0);No;0 ;To determine the order streaming orders. This will facilitate the order selection process to identify the Orders marked for Order streaming
+LINEHAUL_REVENUE;NUMBER(13,4);Yes;; Linehaul Revenue 
+ACCESSORIAL_REVENUE;NUMBER(13,4);Yes;; Accessorial Revenue 
+STOP_OFF_REVENUE;NUMBER(13,4);Yes;; StopOff Revenue 
+REVENUE_LANE_ID;NUMBER(13,4);Yes;; Revenue Lane Id
+REVENUE_LANE_DETAIL_ID;NUMBER(13,4);Yes;; Revenue Lane Detail Id
+MARGIN;NUMBER(13,4);Yes;;Margin : Margin Cost computed from Freight Revenue and Actual Cost
+MARGIN_CURRENCY_CODE;VARCHAR2(3 CHAR);Yes;;Margin Currency Code
+CM_DISCOUNT_REVENUE;NUMBER(13,3);Yes;; CM Discount Revenue field

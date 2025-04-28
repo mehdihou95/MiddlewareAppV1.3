@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Script>
+  <ScriptInfo>
+    <Title>Sample JavaScript and SQL Code</Title>
+    <Author>Developer Team</Author>
+    <Version>1.0.0</Version>
+    <Description>Example of XML with CDATA sections to contain code that has special characters</Description>
+  </ScriptInfo>
+  <JavaScriptCode><![CDATA[
+    function calculateTotal(items) {
+      let total = 0;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].price > 0 && items[i].quantity > 0) {
+          total += items[i].price * items[i].quantity;
+        }
+      }
+      return total < 1000 ? total * 1.1 : total; // Add 10% for small orders
+    }
+    
+    // Test with some sample data
+    const cart = [
+      { id: 1, name: "Product A", price: 29.99, quantity: 2 },
+      { id: 2, name: "Product B", price: 9.99, quantity: 3 },
+      { id: 3, name: "Product C", price: 149.99, quantity: 1 }
+    ];
+    
+    console.log(`Total: $${calculateTotal(cart).toFixed(2)}`);
+  ]]></JavaScriptCode>
+  <SQLQuery><![CDATA[
+    SELECT 
+      p.product_id, 
+      p.product_name, 
+      p.price,
+      c.category_name,
+      (SELECT COUNT(*) FROM order_items oi WHERE oi.product_id = p.product_id) AS order_count
+    FROM 
+      products p
+    INNER JOIN 
+      categories c ON p.category_id = c.category_id
+    WHERE 
+      p.price > 100 AND p.active = 1
+    ORDER BY 
+      order_count DESC, p.price DESC
+    LIMIT 10;
+  ]]></SQLQuery>
+  <HTMLTemplate><![CDATA[
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Product Display</title>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+      <div class="product-container">
+        <h1 class="product-title">{{product.name}}</h1>
+        <div class="product-details">
+          <img src="{{product.image}}" alt="{{product.name}}" />
+          <div class="product-info">
+            <p class="product-price">${{product.price}}</p>
+            <p class="product-description">{{product.description}}</p>
+            <button onclick="addToCart({{product.id}})">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  ]]></HTMLTemplate>
+  <CSSStyles><![CDATA[
+    .product-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+    }
+    
+    .product-title {
+      color: #333;
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+    
+    .product-details {
+      display: flex;
+      gap: 30px;
+    }
+    
+    .product-details img {
+      max-width: 500px;
+      height: auto;
+    }
+    
+    .product-info {
+      flex: 1;
+    }
+    
+    .product-price {
+      font-size: 1.5em;
+      color: #e63946;
+      font-weight: bold;
+    }
+    
+    button {
+      background-color: #1d3557;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    button:hover {
+      background-color: #457b9d;
+    }
+  ]]></CSSStyles>
+</Script>

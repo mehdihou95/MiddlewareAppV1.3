@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Script">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="ScriptInfo">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Title" type="xs:string"/>
+              <xs:element name="Author" type="xs:string"/>
+              <xs:element name="Version" type="xs:string"/>
+              <xs:element name="Description" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="JavaScriptCode" type="xs:string"/>
+        <xs:element name="SQLQuery" type="xs:string"/>
+        <xs:element name="HTMLTemplate" type="xs:string"/>
+        <xs:element name="CSSStyles" type="xs:string"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

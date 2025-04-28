@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document>
+  <Title>Mixed Content XML Example</Title>
+  <Section>
+    <Heading>Introduction to XML</Heading>
+    <Paragraph>This is an example of <Bold>mixed content</Bold> in XML where text and elements are <Italic>intermixed</Italic> within the same element. This is common in document-oriented formats like <Link href="https://www.w3.org/TR/xhtml1/">XHTML</Link> and DocBook.</Paragraph>
+    <Paragraph>Mixed content allows for rich text formatting within paragraphs, making it useful for <Bold>documentation</Bold> and <Italic>publishing</Italic> applications.</Paragraph>
+  </Section>
+  <Section>
+    <Heading>Processing Challenges</Heading>
+    <Paragraph>Mixed content can be challenging to process because you need to preserve both the <Bold>text nodes</Bold> and the <Italic>element nodes</Italic> in the correct order. Many XML processors are designed primarily for <Link href="https://en.wikipedia.org/wiki/Data-oriented_XML">data-oriented XML</Link> rather than document-oriented XML.</Paragraph>
+  </Section>
+</Document>
