@@ -70,7 +70,21 @@ public class ClientOnboardingServiceImpl implements ClientOnboardingService {
         
         List<MappingRule> sourceRules = mappingRuleRepository.findByClient(sourceClient);
         sourceRules.forEach(rule -> {
-            MappingRule newRule = new MappingRule(rule);
+            MappingRule newRule = new MappingRule();
+            newRule.setName(rule.getName());
+            newRule.setSourceField(rule.getSourceField());
+            newRule.setTargetField(rule.getTargetField());
+            newRule.setTransformation(rule.getTransformation());
+            newRule.setRequired(rule.getRequired());
+            newRule.setDefaultValue(rule.getDefaultValue());
+            newRule.setPriority(rule.getPriority());
+            newRule.setDescription(rule.getDescription());
+            newRule.setValidationRule(rule.getValidationRule());
+            newRule.setIsActive(rule.getIsActive());
+            newRule.setTableName(rule.getTableName());
+            newRule.setDataType(rule.getDataType());
+            newRule.setIsAttribute(rule.getIsAttribute());
+            newRule.setXsdElement(rule.getXsdElement());
             newRule.setClient(savedClient);
             mappingRuleRepository.save(newRule);
         });
@@ -120,6 +134,22 @@ public class ClientOnboardingServiceImpl implements ClientOnboardingService {
                     log.error("Invalid configuration structure in file: {}", filename);
                     return false;
                 }
+
+                // Validate mapping rules
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> mappingRules = (List<Map<String, Object>>) config.get("mapping_rules");
+                if (mappingRules != null) {
+                    for (Map<String, Object> rule : mappingRules) {
+                        if (rule.get("source_field") == null || rule.get("source_field").toString().trim().isEmpty()) {
+                            log.error("Missing or empty source_field in mapping rule");
+                            return false;
+                        }
+                        if (rule.get("target_field") == null || rule.get("target_field").toString().trim().isEmpty()) {
+                            log.error("Missing or empty target_field in mapping rule");
+                            return false;
+                        }
+                    }
+                }
             } catch (IOException e) {
                 log.error("Error reading configuration file: {}", filename, e);
                 return false;
@@ -163,14 +193,12 @@ public class ClientOnboardingServiceImpl implements ClientOnboardingService {
                 rule.setClient(client);
                 rule.setName((String) ruleConfig.get("name"));
                 rule.setDescription((String) ruleConfig.get("description"));
-                rule.setXmlPath((String) ruleConfig.get("xml_path"));
-                rule.setDatabaseField((String) ruleConfig.get("database_field"));
+                rule.setSourceField((String) ruleConfig.get("source_field"));
+                rule.setTargetField((String) ruleConfig.get("target_field"));
                 rule.setTransformation((String) ruleConfig.get("transformation"));
                 rule.setRequired((Boolean) ruleConfig.get("required"));
                 rule.setDefaultValue((String) ruleConfig.get("default_value"));
                 rule.setPriority((Integer) ruleConfig.get("priority"));
-                rule.setSourceField((String) ruleConfig.get("source_field"));
-                rule.setTargetField((String) ruleConfig.get("target_field"));
                 rule.setValidationRule((String) ruleConfig.get("validation_rule"));
                 rule.setIsActive((Boolean) ruleConfig.get("is_active"));
                 rule.setTableName((String) ruleConfig.get("table_name"));

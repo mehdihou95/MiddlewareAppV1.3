@@ -612,20 +612,8 @@ public class XsdServiceImpl implements XsdService {
         for (MappingRule rule : clientRules) {
             Map<String, Object> ruleInfo = new HashMap<>();
             ruleInfo.put("name", rule.getName());
-            
-            // Support both old and new field names
-            if (rule.getXmlPath() != null && !rule.getXmlPath().isEmpty()) {
-                ruleInfo.put("xmlPath", rule.getXmlPath());
-            } else if (rule.getSourceField() != null && !rule.getSourceField().isEmpty()) {
-                ruleInfo.put("xmlPath", rule.getSourceField());
-            }
-            
-            if (rule.getDatabaseField() != null && !rule.getDatabaseField().isEmpty()) {
-                ruleInfo.put("databaseField", rule.getDatabaseField());
-            } else if (rule.getTargetField() != null && !rule.getTargetField().isEmpty()) {
-                ruleInfo.put("databaseField", rule.getTargetField());
-            }
-            
+            ruleInfo.put("sourceField", rule.getSourceField());
+            ruleInfo.put("targetField", rule.getTargetField());
             ruleInfo.put("type", "mapping_rule");
             structure.add(ruleInfo);
         }
@@ -841,24 +829,11 @@ public class XsdServiceImpl implements XsdService {
             clientAnalysis.append("\nClient-specific Mapping Rules:\n");
             for (MappingRule rule : clientRules) {
                 clientAnalysis.append("- ").append(rule.getName())
-                    .append(" (");
-                
-                // Support both old and new field names
-                if (rule.getXmlPath() != null && !rule.getXmlPath().isEmpty()) {
-                    clientAnalysis.append(rule.getXmlPath());
-                } else if (rule.getSourceField() != null && !rule.getSourceField().isEmpty()) {
-                    clientAnalysis.append(rule.getSourceField());
-                }
-                
-                clientAnalysis.append(" -> ");
-                
-                if (rule.getDatabaseField() != null && !rule.getDatabaseField().isEmpty()) {
-                    clientAnalysis.append(rule.getDatabaseField());
-                } else if (rule.getTargetField() != null && !rule.getTargetField().isEmpty()) {
-                    clientAnalysis.append(rule.getTargetField());
-                }
-                
-                clientAnalysis.append(")\n");
+                    .append(" (")
+                    .append(rule.getSourceField())
+                    .append(" -> ")
+                    .append(rule.getTargetField())
+                    .append(")\n");
             }
             
             return clientAnalysis.toString();

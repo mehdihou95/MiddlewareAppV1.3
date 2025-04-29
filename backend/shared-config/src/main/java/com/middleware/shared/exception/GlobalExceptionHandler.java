@@ -98,6 +98,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<StandardErrorResponse> handleAuthenticationException(
             AuthenticationException ex) {
+        log.warn("Authentication error: {}", ex.getMessage());
         StandardErrorResponse response = StandardErrorResponse.builder()
             .code(ErrorCodes.AUTH_INVALID_CREDENTIALS)
             .message("Authentication failed")
@@ -188,7 +189,7 @@ public class GlobalExceptionHandler {
     
     @ExceptionHandler(Exception.class)
     public ResponseEntity<StandardErrorResponse> handleGenericException(Exception ex) {
-        log.error("Unhandled exception", ex);
+        log.error("Unexpected error: {}", ex.getMessage(), ex);
         
         StandardErrorResponse response = StandardErrorResponse.builder()
             .code(ErrorCodes.SYS_UNEXPECTED_ERROR)

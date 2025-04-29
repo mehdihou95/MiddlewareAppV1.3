@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.Type;
 
 /**
  * Entity representing a processed file.
@@ -59,4 +60,22 @@ public class ProcessedFile extends BaseEntity {
 
     @Column(nullable = false)
     private LocalDateTime processedAt;
+
+    @Column
+    private String filePath; // Reference to actual file storage
+
+    @Column
+    private String storageType; // "DB" or "FS"
+
+    @Lob
+    @Column
+    private byte[] contentBytes; // Only used if storageType is "DB"
+
+    @PrePersist
+    protected void onCreate() {
+        super.onCreate();
+        if (processedAt == null) {
+            processedAt = LocalDateTime.now();
+        }
+    }
 }

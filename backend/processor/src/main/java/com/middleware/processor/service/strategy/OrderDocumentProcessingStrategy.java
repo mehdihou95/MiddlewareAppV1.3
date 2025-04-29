@@ -1,16 +1,16 @@
 package com.middleware.processor.service.strategy;
 
 import com.middleware.processor.exception.ValidationException;
+import com.middleware.processor.service.interfaces.OrderService;
+import com.middleware.processor.service.interfaces.XmlValidationService;
+import com.middleware.processor.service.util.TransformationService;
+import com.middleware.processor.service.util.XmlProcessor;
 import com.middleware.shared.model.Interface;
-import com.middleware.shared.model.ProcessedFile;
+import com.middleware.shared.model.MappingRule;
 import com.middleware.shared.model.OrderHeader;
 import com.middleware.shared.model.OrderLine;
-import com.middleware.shared.model.Client;
-import com.middleware.shared.model.MappingRule;
-import com.middleware.processor.service.util.XmlProcessor;
-import com.middleware.processor.service.util.TransformationService;
-import com.middleware.processor.service.interfaces.OrderService;
-import com.middleware.shared.service.util.CircuitBreakerService;
+import com.middleware.shared.repository.MappingRuleRepository;
+import com.middleware.shared.repository.ProcessedFileRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,408 +18,225 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
+import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import com.middleware.processor.service.factory.OrderFactory;
+
 import java.lang.reflect.Method;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.time.LocalDateTime;
-import org.springframework.web.multipart.MultipartFile;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Implementation of the Order document processing strategy that handles XML documents
- * with different namespace prefix styles.
+ * Strategy for processing Order documents.
+ * Extends the base template to provide Order-specific processing logic.
  */
 @Component
 public class OrderDocumentProcessingStrategy extends BaseDocumentProcessingTemplate {
-    
-    private static final Logger logger = LoggerFactory.getLogger(OrderDocumentProcessingStrategy.class);
-    private static final String ORDER_TYPE = "ORDER";
-    
+
+    private static final Logger log = LoggerFactory.getLogger(OrderDocumentProcessingStrategy.class);
+
+    private static final String ORDER_ROOT_ELEMENT = "ORDER";
+
     @Autowired
-    private com.middleware.processor.service.interfaces.OrderService orderService;
-    
-    @Autowired
-    private TransformationService transformationService;
-    
-    @Autowired
-    private OrderFactory orderFactory;
-    
+    private OrderService orderService;
+
     @Override
     public String getDocumentType() {
-        return "ORDER";
+        return ORDER_ROOT_ELEMENT;
     }
-    
+
     @Override
-    public boolean canHandle(String documentType) {
-        return "ORDER".equalsIgnoreCase(documentType);
+    public boolean canHandle(String rootElement) {
+        return ORDER_ROOT_ELEMENT.equals(rootElement);
     }
-    
+
     @Override
     public String getName() {
-        return "Order Document Processing Strategy";
-    }
-
-    @Override
-    protected String getHeaderTableName() {
-        return "ORDER_HEADERS";
-    }
-
-    @Override
-    protected String getLineTableName() {
-        return "ORDER_LINES";
-    }
-
-    @Override
-    protected Object createDefaultHeader(Client client) {
-        return orderFactory.createDefaultHeader(client);
-    }
-
-    @Override
-    @Transactional(propagation = Propagation.MANDATORY)
-    protected boolean processHeader(Object header, List<MappingRule> rules, Document document, 
-            AtomicBoolean hasErrors, StringBuilder errorMessages) {
-        OrderHeader orderHeader = (OrderHeader) header;
-        
-        for (MappingRule rule : rules) {
-            if (rule.getIsActive()) {
-                try {
-                    String xmlPath = getXmlPath(rule);
-                    if (xmlPath != null && !xmlPath.isEmpty()) {
-                        String value = xmlProcessor.evaluateXPath(document, xmlPath);
-                        if (value != null) {
-                            setFieldValue(orderHeader, rule, value);
-                        }
-                    }
-                } catch (Exception e) {
-                    hasErrors.set(true);
-                    errorMessages.append("Header mapping error for ").append(getXmlPath(rule))
-                        .append(": ").append(e.getMessage()).append("; ");
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    @Override
-    @Transactional(propagation = Propagation.MANDATORY)
-    protected Object saveHeader(Object header, AtomicBoolean hasErrors, StringBuilder errorMessages) {
-        try {
-            return circuitBreakerService.executeRepositoryOperation(
-                () -> orderService.createOrderHeader((OrderHeader) header),
-                () -> {
-                    hasErrors.set(true);
-                    errorMessages.append("Failed to save Order header: Circuit breaker open; ");
-                    return header;
-                }
-            );
-        } catch (Exception e) {
-            hasErrors.set(true);
-            errorMessages.append("Failed to save Order header: ").append(e.getMessage()).append("; ");
-            logger.error("Error saving Order header: {}", e.getMessage(), e);
-            return header;
-        }
-    }
-
-    @Override
-    @Transactional(propagation = Propagation.MANDATORY)
-    protected boolean processLines(Object savedHeader, List<MappingRule> rules, Document document,
-            Interface interfaceEntity, AtomicBoolean hasErrors, StringBuilder errorMessages) {
-        OrderHeader header = (OrderHeader) savedHeader;
-        List<OrderLine> lines = new ArrayList<>();
-        
-        // Group line rules by their parent paths
-        Map<String, List<MappingRule>> lineRulesByParent = groupRulesByParentPath(rules);
-        
-        // Process each group of line rules
-        Set<Node> processedNodes = new HashSet<>();
-        for (Map.Entry<String, List<MappingRule>> entry : lineRulesByParent.entrySet()) {
-            String parentPath = entry.getKey();
-            List<MappingRule> rulesForPath = entry.getValue();
-            
-            NodeList lineNodes = findLineNodes(document, parentPath);
-            
-            if (lineNodes != null && lineNodes.getLength() > 0) {
-                for (int i = 0; i < lineNodes.getLength(); i++) {
-                    Node lineContext = lineNodes.item(i);
-                    
-                    if (!processedNodes.contains(lineContext)) {
-                        processedNodes.add(lineContext);
-                        
-                        OrderLine line = orderFactory.createDefaultLine(header, interfaceEntity.getClient());
-                        boolean hasLineError = false;
-                        
-                        for (MappingRule rule : rulesForPath) {
-                            try {
-                                String xmlPath = getXmlPath(rule);
-                                if (xmlPath != null && !xmlPath.isEmpty()) {
-                                    String relativePath = xmlProcessor.getRelativePath(xmlPath, parentPath);
-                                    String value = xmlProcessor.evaluateXPath(lineContext, relativePath);
-                                    
-                                    if (value != null) {
-                                        setFieldValue(line, rule, value);
-                                    }
-                                }
-                            } catch (Exception e) {
-                                logger.error("Error applying line mapping rule {} for field {}: {}", 
-                                    getXmlPath(rule), getDatabaseField(rule), e.getMessage());
-                                hasErrors.set(true);
-                                hasLineError = true;
-                                errorMessages.append("Line ").append(i + 1).append(" mapping error for ")
-                                    .append(getXmlPath(rule)).append(": ").append(e.getMessage()).append("; ");
-                                break;
-                            }
-                        }
-                        if (!hasLineError) {
-                            lines.add(line);
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Save lines if no errors
-        if (!hasErrors.get() && !lines.isEmpty()) {
-            try {
-                circuitBreakerService.executeRepositoryOperation(
-                    () -> {
-                        orderService.createOrderLines(lines);
-                        return null;
-                    },
-                    () -> {
-                        hasErrors.set(true);
-                        errorMessages.append("Failed to save Order lines: Circuit breaker open; ");
-                        return null;
-                    }
-                );
-            } catch (Exception e) {
-                hasErrors.set(true);
-                errorMessages.append("Failed to save Order lines: ").append(e.getMessage()).append("; ");
-                logger.error("Error saving Order lines: {}", e.getMessage(), e);
-            }
-        }
-        
-        return !hasErrors.get();
-    }
-
-    /**
-     * Group mapping rules by their parent XML paths.
-     */
-    private Map<String, List<MappingRule>> groupRulesByParentPath(List<MappingRule> rules) {
-        Map<String, List<MappingRule>> rulesByParent = new HashMap<>();
-        
-        for (MappingRule rule : rules) {
-            if (rule.getIsActive()) {
-                String xmlPath = getXmlPath(rule);
-                if (xmlPath != null && !xmlPath.isEmpty()) {
-                    String parentPath = xmlProcessor.getParentPath(xmlPath);
-                    rulesByParent.computeIfAbsent(parentPath, k -> new ArrayList<>()).add(rule);
-                }
-            }
-        }
-        
-        return rulesByParent;
-    }
-    
-    /**
-     * Find line nodes in the document using multiple approaches.
-     */
-    private NodeList findLineNodes(Document document, String parentPath) {
-        try {
-            NodeList nodes = xmlProcessor.evaluateXPathNodeList(document, parentPath);
-            if (nodes != null && nodes.getLength() > 0) {
-                return nodes;
-            }
-            
-            String[] commonPatterns = {
-                "//Items/Item",
-                "//tns:Items/tns:Item",
-                "//*[local-name()='Items']/*[local-name()='Item']",
-                "//Lines/Line",
-                "//tns:Lines/tns:Line",
-                "//*[local-name()='Lines']/*[local-name()='Line']",
-                "//Details/Detail",
-                "//tns:Details/tns:Detail",
-                "//*[local-name()='Details']/*[local-name()='Detail']"
-            };
-            
-            for (String pattern : commonPatterns) {
-                nodes = xmlProcessor.evaluateXPathNodeList(document, pattern);
-                if (nodes != null && nodes.getLength() > 0) {
-                    logger.info("Found line nodes using pattern: {}", pattern);
-                    return nodes;
-                }
-            }
-            
-            return findRepeatingElements(document);
-            
-        } catch (Exception e) {
-            logger.error("Error finding line nodes: {}", e.getMessage());
-            return null;
-        }
-    }
-    
-    /**
-     * Find repeating elements in the document that might be line items.
-     */
-    private NodeList findRepeatingElements(Document document) {
-        try {
-            NodeList allElements = document.getElementsByTagName("*");
-            Map<String, List<Node>> elementsByName = new HashMap<>();
-            
-            for (int i = 0; i < allElements.getLength(); i++) {
-                Node node = allElements.item(i);
-                String name = node.getLocalName();
-                if (name != null) {
-                    elementsByName.computeIfAbsent(name, k -> new ArrayList<>()).add(node);
-                }
-            }
-            
-            for (Map.Entry<String, List<Node>> entry : elementsByName.entrySet()) {
-                List<Node> nodes = entry.getValue();
-                if (nodes.size() > 1) {
-                    Node parent = nodes.get(0).getParentNode();
-                    boolean sameParent = true;
-                    
-                    for (int i = 1; i < nodes.size(); i++) {
-                        if (nodes.get(i).getParentNode() != parent) {
-                            sameParent = false;
-                            break;
-                        }
-                    }
-                    
-                    if (sameParent) {
-                        return createNodeList(nodes);
-                    }
-                }
-            }
-            
-            return null;
-        } catch (Exception e) {
-            logger.error("Error finding repeating elements: {}", e.getMessage());
-            return null;
-        }
-    }
-    
-    private NodeList createNodeList(List<Node> nodes) {
-        return new NodeList() {
-            @Override
-            public Node item(int index) {
-                return nodes.get(index);
-            }
-
-            @Override
-            public int getLength() {
-                return nodes.size();
-            }
-        };
-    }
-    
-    /**
-     * Set a field value on an entity using reflection.
-     */
-    private void setFieldValue(Object entity, MappingRule rule, String value) throws Exception {
-        if (value == null || value.isEmpty()) {
-            return;
-        }
-        
-        String fieldName = getDatabaseField(rule);
-        if (fieldName == null || fieldName.isEmpty()) {
-            return;
-        }
-        
-        if (fieldName.contains("_")) {
-            fieldName = xmlProcessor.toCamelCase(fieldName);
-        }
-        
-        String methodName = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-        
-        Method[] methods = entity.getClass().getMethods();
-        Method setterMethod = null;
-        
-        for (Method method : methods) {
-            if (method.getName().equalsIgnoreCase(methodName) && method.getParameterCount() == 1) {
-                setterMethod = method;
-                break;
-            }
-        }
-        
-        if (setterMethod == null) {
-            throw new NoSuchMethodException("No setter method found for field: " + fieldName);
-        }
-        
-        Class<?> paramType = setterMethod.getParameterTypes()[0];
-        Object transformedValue = transformValue(value, paramType, rule.getTransformation());
-        setterMethod.invoke(entity, transformedValue);
-    }
-    
-    /**
-     * Transform a value based on its target type and transformation rule.
-     */
-    private Object transformValue(String value, Class<?> targetType, String transformation) throws Exception {
-        if (value == null || value.isEmpty()) {
-            return null;
-        }
-
-        try {
-            return transformationService.transformAndConvert(value, transformation, targetType);
-        } catch (Exception e) {
-            logger.error("Error transforming value '{}' to type '{}' with transformation '{}': {}", 
-                value, targetType.getName(), transformation, e.getMessage());
-            throw e;
-        }
-    }
-    
-    /**
-     * Get the XML path from a mapping rule.
-     */
-    private String getXmlPath(MappingRule rule) {
-        try {
-            Method getSourceField = rule.getClass().getMethod("getSourceField");
-            String sourceField = (String) getSourceField.invoke(rule);
-            if (sourceField != null && !sourceField.isEmpty()) {
-                return sourceField;
-            }
-        } catch (Exception e) {
-            // Field doesn't exist, try the old field name
-        }
-        
-        try {
-            Method getXmlPath = rule.getClass().getMethod("getXmlPath");
-            return (String) getXmlPath.invoke(rule);
-        } catch (Exception e) {
-            logger.error("Error getting XML path from rule: {}", e.getMessage());
-            return null;
-        }
-    }
-    
-    /**
-     * Get the database field from a mapping rule.
-     */
-    private String getDatabaseField(MappingRule rule) {
-        try {
-            Method getTargetField = rule.getClass().getMethod("getTargetField");
-            String targetField = (String) getTargetField.invoke(rule);
-            if (targetField != null && !targetField.isEmpty()) {
-                return targetField;
-            }
-        } catch (Exception e) {
-            // Field doesn't exist, try the old field name
-        }
-        
-        try {
-            Method getDatabaseField = rule.getClass().getMethod("getDatabaseField");
-            return (String) getDatabaseField.invoke(rule);
-        } catch (Exception e) {
-            logger.error("Error getting database field from rule: {}", e.getMessage());
-            return null;
-        }
+        return "Order Processing Strategy";
     }
 
     @Override
     public int getPriority() {
-        return 100; // High priority for Order processing
+        return 20; // Example priority, lower than ASN if ASN is more specific
+    }
+
+    /**
+     * Performs Order-specific document processing.
+     * Requires an existing transaction (MANDATORY propagation).
+     *
+     * @param document        The parsed XML document.
+     * @param interfaceEntity The interface configuration.
+     * @return The processed OrderHeader entity.
+     * @throws Exception If processing fails.
+     */
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    protected Object processSpecificDocument(Document document, Interface interfaceEntity) throws Exception {
+        log.debug("Starting Order specific processing for interface: {}", interfaceEntity.getName());
+
+        // 1. Extract Header Data
+        OrderHeader orderHeader = extractOrderHeader(document, interfaceEntity);
+        log.debug("Order Header extracted: {}", orderHeader.getOrderNumber());
+
+        // 2. Extract Line Item Data
+        List<OrderLine> orderLines = extractOrderLines(document, interfaceEntity, orderHeader);
+        log.debug("Extracted {} Order lines.", orderLines.size());
+
+        // Save header first
+        OrderHeader savedHeader = orderService.createOrderHeader(orderHeader);
+        
+        // Then create lines
+        orderLines.forEach(line -> {
+            line.setOrderHeader(savedHeader);
+            orderService.createOrderLine(line);
+        });
+        
+        log.info("Order Header and Lines saved successfully for Order: {}", savedHeader.getOrderNumber());
+
+        return savedHeader;
+    }
+
+    /**
+     * Extracts Order header data from the XML document based on mapping rules.
+     * Requires an existing transaction (MANDATORY propagation).
+     *
+     * @param document        The XML document.
+     * @param interfaceEntity The interface configuration.
+     * @return The populated OrderHeader entity.
+     * @throws Exception If extraction fails.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    protected OrderHeader extractOrderHeader(Document document, Interface interfaceEntity) throws Exception {
+        OrderHeader orderHeader = new OrderHeader();
+        orderHeader.setClient(interfaceEntity.getClient());
+        orderHeader.setStatus("NEW");
+        orderHeader.setOrderDateDttm(LocalDateTime.now());
+
+        List<MappingRule> rules = getActiveMappingRules(interfaceEntity.getId());
+        log.debug("Applying {} mapping rules for Order header.", rules.size());
+
+        for (MappingRule rule : rules) {
+            if (isHeaderRule(rule)) { // Assuming a method to identify header rules
+                try {
+                    // Use standardized sourceField
+                    String xmlValue = xmlProcessor.evaluateXPath(document, rule.getSourceField());
+                    if (xmlValue != null && !xmlValue.isEmpty()) {
+                        String transformedValue = applyTransformation(xmlValue, rule);
+                        // Use standardized targetField
+                        setFieldValue(orderHeader, rule.getTargetField(), transformedValue);
+                    } else if (rule.getRequired()) {
+                        throw new ValidationException("Required header field missing: " + rule.getName() + " (XPath: " + rule.getSourceField() + ")");
+                    } else if (rule.getDefaultValue() != null) {
+                        // Use standardized targetField
+                        setFieldValue(orderHeader, rule.getTargetField(), rule.getDefaultValue());
+                    }
+                } catch (Exception e) {
+                    log.error("Error processing header rule 	{}	 for path 	{}	: {}", rule.getName(), rule.getSourceField(), e.getMessage());
+                    if (rule.getRequired()) {
+                        throw new ValidationException("Error processing required header field " + rule.getName() + ": " + e.getMessage(), e);
+                    }
+                }
+            }
+        }
+        return orderHeader;
+    }
+
+    /**
+     * Extracts Order line items from the XML document based on mapping rules.
+     * Requires an existing transaction (MANDATORY propagation).
+     *
+     * @param document        The XML document.
+     * @param interfaceEntity The interface configuration.
+     * @param orderHeader     The parent OrderHeader entity.
+     * @return List of populated OrderLine entities.
+     * @throws Exception If extraction fails.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    protected List<OrderLine> extractOrderLines(Document document, Interface interfaceEntity, OrderHeader orderHeader) throws Exception {
+        List<OrderLine> orderLines = new ArrayList<>();
+        List<MappingRule> rules = getActiveMappingRules(interfaceEntity.getId());
+
+        NodeList lineNodes = xmlProcessor.evaluateXPathForNodes(document, "//OrderLine"); // Using correct method name
+        log.debug("Found {} line nodes in XML.", lineNodes.getLength());
+
+        for (int i = 0; i < lineNodes.getLength(); i++) {
+            Element lineElement = (Element) lineNodes.item(i);
+            OrderLine line = new OrderLine();
+            line.setOrderHeader(orderHeader);
+            line.setClient(interfaceEntity.getClient());
+            line.setStatus("NEW");
+            line.setLineNumber(String.format("%03d", i + 1)); // Format line number as 3-digit string
+
+            for (MappingRule rule : rules) {
+                if (isLineRule(rule)) { // Assuming a method to identify line rules
+                    try {
+                        String xmlValue = xmlProcessor.evaluateXPath(lineElement, rule.getSourceField());
+                        if (xmlValue != null && !xmlValue.isEmpty()) {
+                            String transformedValue = applyTransformation(xmlValue, rule);
+                            // Apply the transformed value to the line using reflection
+                            setFieldValue(line, rule.getTargetField(), transformedValue);
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to apply line mapping rule {}: {}", rule.getId(), e.getMessage());
+                    }
+                }
+            }
+            orderLines.add(line);
+        }
+        return orderLines;
+    }
+
+    // --- Helper Methods (Similar to AsnDocumentProcessingStrategy) ---
+
+    private boolean isHeaderRule(MappingRule rule) {
+        // Adapt logic based on how Order header rules are identified
+        return rule.getTargetField() != null && !rule.getTargetField().contains("line"); // Simplified example
+    }
+
+    private boolean isLineRule(MappingRule rule) {
+        // Adapt logic based on how Order line rules are identified
+        return rule.getTargetField() != null && rule.getTargetField().contains("line"); // Simplified example
+    }
+
+    private String determineLineItemBasePath(Interface interfaceEntity) {
+        // Adapt logic for Order documents
+        // return interfaceEntity.getLineItemBasePath();
+        return "/Outbound/Orders/Order/Lines/Line"; // Hardcoded example for Order
+    }
+
+    private String adjustXPathForLine(String fullXPath, String basePath) {
+        if (fullXPath != null && fullXPath.startsWith(basePath)) {
+            String relativePath = fullXPath.substring(basePath.length());
+            return relativePath.startsWith("/") ? "." + relativePath : "./" + relativePath;
+        }
+        log.warn("XPath 	{}	 does not start with base path 	{}	. Assuming relative path.", fullXPath, basePath);
+        return fullXPath.startsWith("/") ? "." + fullXPath : "./" + fullXPath;
+    }
+
+    /**
+     * Sets a field value on an entity using reflection.
+     * 
+     * @param entity The entity to set the field on
+     * @param fieldName The name of the field to set
+     * @param value The value to set
+     * @throws Exception If the field cannot be set
+     */
+    protected void setFieldValue(Object entity, String fieldName, String value) throws Exception {
+        try {
+            String setterName = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+            Method setter = entity.getClass().getMethod(setterName, String.class);
+            setter.invoke(entity, value);
+        } catch (Exception e) {
+            log.error("Failed to set field {} with value {}: {}", fieldName, value, e.getMessage());
+            throw e;
+        }
+    }
+
+    @Override
+    protected void performAdditionalValidations(Document document, Interface interfaceEntity) throws ValidationException {
+        log.debug("Performing additional Order validations for interface: {}", interfaceEntity.getName());
+        // Add Order-specific validations if needed
+        log.debug("Additional Order validations passed.");
     }
 }
+

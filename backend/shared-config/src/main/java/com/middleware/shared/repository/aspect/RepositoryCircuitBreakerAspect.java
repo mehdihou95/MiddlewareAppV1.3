@@ -1,6 +1,9 @@
 package com.middleware.shared.repository.aspect;
 
 import com.middleware.shared.service.util.CircuitBreakerService;
+import com.middleware.shared.model.ProcessedFile;
+import com.middleware.shared.model.Client;
+import com.middleware.shared.model.Interface;
 import com.middleware.shared.exception.BaseValidationException;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -53,25 +56,47 @@ public class RepositoryCircuitBreakerAspect {
         String methodName = method.getName();
         String className = joinPoint.getTarget().getClass().getSimpleName();
         
+        // Sanitize and log method information
         log.debug("Applying circuit breaker to repository method: {}.{}", className, methodName);
-        log.debug("Method arguments: {}", Arrays.toString(joinPoint.getArgs()));
+        log.debug("Method arguments count: {}", joinPoint.getArgs().length);
+        
+        // Sanitize sensitive data in arguments
+        Object[] sanitizedArgs = Arrays.stream(joinPoint.getArgs())
+            .map(arg -> {
+                if (arg == null) return "null";
+                if (arg instanceof ProcessedFile) {
+                    return String.format("ProcessedFile[id=%s]", ((ProcessedFile) arg).getId());
+                }
+                if (arg instanceof Client) {
+                    return String.format("Client[id=%s]", ((Client) arg).getId());
+                }
+                if (arg instanceof Interface) {
+                    return String.format("Interface[id=%s]", ((Interface) arg).getId());
+                }
+                return arg.getClass().getSimpleName();
+            })
+            .toArray();
+            
+        log.debug("Sanitized arguments: {}", Arrays.toString(sanitizedArgs));
         
         try {
-            // Handle different return types with appropriate fallbacks
-            if (methodName.startsWith("find") || methodName.equals("getOne") || methodName.equals("getReferenceById")) {
-                return handleFindMethod(joinPoint, methodName, method.getReturnType());
-            } else if (methodName.equals("save") || methodName.equals("saveAndFlush") || methodName.equals("saveAll")) {
-                return handleSaveMethod(joinPoint, method.getReturnType());
-            } else if (methodName.startsWith("delete") || methodName.equals("deleteAll") || methodName.equals("deleteAllInBatch")) {
-                return handleDeleteMethod(joinPoint);
-            } else if (methodName.equals("count") || methodName.equals("exists")) {
-                return handleCountMethod(joinPoint, methodName);
-            } else {
-                // For other methods, apply default circuit breaker
-                return handleDefaultMethod(joinPoint, className, methodName, method.getReturnType());
-            }
+            // Use the existing session instead of creating new ones
+            return circuitBreakerService.executeRepositoryOperation(
+                () -> {
+                    try {
+                        return joinPoint.proceed();
+                    } catch (Throwable t) {
+                        log.error("Error executing repository method {}.{}: {}", className, methodName, t.getMessage(), t);
+                        throw wrapException(t);
+                    }
+                },
+                () -> {
+                    log.warn("Circuit breaker fallback for method {}.{}", className, methodName);
+                    return getFallbackValue(method.getReturnType(), joinPoint.getArgs());
+                }
+            );
         } catch (Exception e) {
-            log.error("Circuit breaker error in {}.{}: {}", className, methodName, e.getMessage(), e);
+            log.error("Circuit breaker error in {}.{}: {}", className, methodName, e.getMessage());
             throw e;
         }
     }

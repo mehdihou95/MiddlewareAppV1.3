@@ -1,5 +1,6 @@
 package com.middleware.processor.config;
 
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.timelimiter.TimeLimiterConfig;
@@ -78,6 +79,26 @@ public class CircuitBreakerConfiguration {
      */
     @Bean
     public CircuitBreakerRegistry circuitBreakerRegistry() {
-        return CircuitBreakerRegistry.ofDefaults();
+        CircuitBreakerConfig config = CircuitBreakerConfig.custom()
+            .failureRateThreshold(40)
+            .waitDurationInOpenState(Duration.ofMillis(10000))
+            .permittedNumberOfCallsInHalfOpenState(2)
+            .slidingWindowSize(10)
+            .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+            .minimumNumberOfCalls(5)
+            .recordExceptions(Exception.class)
+            .build();
+
+        return CircuitBreakerRegistry.of(config);
+    }
+
+    @Bean
+    public CircuitBreaker repositoryCircuitBreaker(CircuitBreakerRegistry registry) {
+        return registry.circuitBreaker("repositoryOperations");
+    }
+
+    @Bean
+    public CircuitBreaker xmlProcessingCircuitBreaker(CircuitBreakerRegistry registry) {
+        return registry.circuitBreaker("xmlProcessing");
     }
 }

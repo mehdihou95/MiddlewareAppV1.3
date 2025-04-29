@@ -1,12 +1,19 @@
 package com.middleware.shared.exception;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
  * Standard error response format for the application.
  */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ErrorResponse {
-    private final int status;
-    private final String error;
-    private final String message;
+    private String message;
+    private String code;
+    private long timestamp = System.currentTimeMillis();
 
     /**
      * Constructs a new ErrorResponse with the specified details.
@@ -16,9 +23,8 @@ public class ErrorResponse {
      * @param message The error message
      */
     public ErrorResponse(int status, String error, String message) {
-        this.status = status;
-        this.error = error;
         this.message = message;
+        this.code = error;
     }
 
     /**
@@ -27,7 +33,7 @@ public class ErrorResponse {
      * @return The status code
      */
     public int getStatus() {
-        return status;
+        return Integer.parseInt(code);
     }
 
     /**
@@ -36,7 +42,7 @@ public class ErrorResponse {
      * @return The error type
      */
     public String getError() {
-        return error;
+        return code;
     }
 
     /**

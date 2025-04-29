@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import com.middleware.shared.exception.ResourceNotFoundException;
 
 import java.time.LocalDate;
@@ -93,8 +94,8 @@ public class AsnServiceImpl implements AsnService {
     @Transactional(readOnly = true)
     public Optional<AsnHeader> findByAsnNumberAndClient_Id(String asnNumber, Long clientId) {
         return circuitBreakerService.executeRepositoryOperation(
-            () -> asnHeaderRepository.findByAsnNumberAndClient_Id(asnNumber, clientId),
-            Optional::empty // Fallback: return empty optional
+            () -> asnHeaderRepository.findByAsnNumberAndClient_IdWithClientAndLines(asnNumber, clientId),
+            Optional::empty
         );
     }
 
@@ -108,21 +109,31 @@ public class AsnServiceImpl implements AsnService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public AsnHeader createAsnHeader(AsnHeader header) {
         validateAsnHeader(header);
         return circuitBreakerService.executeRepositoryOperation(
-            () -> asnHeaderRepository.save(header),
             () -> {
-                // Fallback: return the original header with error status
-                header.setStatus("ERROR");
+                // Save the header with entity graph
+                AsnHeader savedHeader = asnHeaderRepository.save(header);
+                
+                // Verify ID was generated
+                if (savedHeader.getId() == null) {
+                    throw new ValidationException("Failed to generate ID for ASN Header");
+                }
+                
+                // Return the saved header with entity graph
+                return savedHeader;
+            },
+            () -> {
+                header.setStatus("ERROR - Circuit breaker open");
                 return header;
             }
         );
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public AsnHeader updateAsnHeader(Long id, AsnHeader headerDetails) {
         return circuitBreakerService.executeRepositoryOperation(
             () -> {
@@ -148,7 +159,7 @@ public class AsnServiceImpl implements AsnService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deleteAsnHeader(Long id) {
         circuitBreakerService.executeVoidRepositoryOperation(
             () -> {
@@ -178,8 +189,14 @@ public class AsnServiceImpl implements AsnService {
     public Page<AsnLine> getAsnLinesByHeader(Long headerId, Pageable pageable) {
         return circuitBreakerService.executeRepositoryOperation(
             () -> asnLineRepository.findByHeader_Id(headerId, pageable),
-            () -> Page.empty(pageable) // Fallback: return empty page
+            () -> Page.empty(pageable)
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AsnLine> getAsnLinesByHeader_Id(Long headerId, Pageable pageable) {
+        return getAsnLinesByHeader(headerId, pageable);
     }
 
     @Override
@@ -197,15 +214,6 @@ public class AsnServiceImpl implements AsnService {
         return circuitBreakerService.executeRepositoryOperation(
             () -> asnLineRepository.findAll(pageable),
             () -> Page.empty(pageable) // Fallback: return empty page
-        );
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<AsnLine> getAsnLinesByHeader_Id(Long headerId, Pageable pageable) {
-        return circuitBreakerService.<Page<AsnLine>>executeRepositoryOperation(
-            () -> asnLineRepository.findByHeader_Id(headerId, pageable),
-            () -> Page.empty(pageable)
         );
     }
 
@@ -264,7 +272,7 @@ public class AsnServiceImpl implements AsnService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public AsnLine createAsnLine(AsnLine line) {
         validateAsnLine(line);
         return circuitBreakerService.executeRepositoryOperation(
@@ -278,7 +286,7 @@ public class AsnServiceImpl implements AsnService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public AsnLine updateAsnLine(Long id, AsnLine lineDetails) {
         return circuitBreakerService.executeRepositoryOperation(
             () -> {
@@ -305,7 +313,7 @@ public class AsnServiceImpl implements AsnService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deleteAsnLine(Long id) {
         circuitBreakerService.executeVoidRepositoryOperation(
             () -> {
@@ -322,18 +330,37 @@ public class AsnServiceImpl implements AsnService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<AsnLine> createAsnLines(List<AsnLine> lines) {
+        if (lines == null || lines.isEmpty()) {
+            return List.of();
+        }
+        
         return circuitBreakerService.executeRepositoryOperation(
             () -> {
-                for (AsnLine line : lines) {
-                    validateAsnLine(line);
+                // Validate all lines first
+                lines.forEach(this::validateAsnLine);
+                
+                // Ensure all lines have the same header and client
+                AsnHeader header = lines.get(0).getHeader();
+                if (header == null) {
+                    throw new ValidationException("Header must be specified for ASN Lines");
                 }
+                
+                lines.forEach(line -> {
+                    if (!header.equals(line.getHeader())) {
+                        throw new ValidationException("All lines must belong to the same header");
+                    }
+                    if (!header.getClient().equals(line.getClient())) {
+                        throw new ValidationException("All lines must belong to the same client as the header");
+                    }
+                });
+                
+                // Save all lines in a batch
                 return asnLineRepository.saveAll(lines);
             },
             () -> {
-                // Fallback: return the original lines with error status
-                lines.forEach(line -> line.setStatus("ERROR"));
+                lines.forEach(line -> line.setStatus("ERROR - Circuit breaker open"));
                 return lines;
             }
         );
@@ -348,21 +375,29 @@ public class AsnServiceImpl implements AsnService {
         );
     }
 
-    private void validateAsnHeader(AsnHeader asnHeader) {
-        if (asnHeader.getAsnNumber() == null || asnHeader.getAsnNumber().trim().isEmpty()) {
-            throw new ValidationException("ASN number is required");
+    private void validateAsnHeader(AsnHeader header) {
+        if (header == null) {
+            throw new ValidationException("ASN Header cannot be null");
         }
-        if (asnHeader.getClient() == null || asnHeader.getClient().getId() == null) {
-            throw new ValidationException("Client is required");
+        if (header.getClient() == null) {
+            throw new ValidationException("Client must be specified for ASN Header");
         }
+        // Add more validations as needed
     }
 
-    private void validateAsnLine(AsnLine asnLine) {
-        if (asnLine.getHeader() == null || asnLine.getHeader().getId() == null) {
-            throw new ValidationException("ASN header is required");
+    private void validateAsnLine(AsnLine line) {
+        if (line == null) {
+            throw new ValidationException("ASN Line cannot be null");
         }
-        if (asnLine.getItemNumber() == null || asnLine.getItemNumber().trim().isEmpty()) {
-            throw new ValidationException("Item number is required");
+        if (line.getHeader() == null) {
+            throw new ValidationException("Header must be specified for ASN Line");
         }
+        if (line.getClient() == null) {
+            throw new ValidationException("Client must be specified for ASN Line");
+        }
+        if (line.getLineNumber() == null || line.getLineNumber().trim().isEmpty()) {
+            throw new ValidationException("Line number must be specified for ASN Line");
+        }
+        // Add more specific validations as needed
     }
 }

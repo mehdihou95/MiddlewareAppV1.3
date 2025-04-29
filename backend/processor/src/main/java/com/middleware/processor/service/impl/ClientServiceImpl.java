@@ -1,8 +1,17 @@
 package com.middleware.processor.service.impl;
 
 import com.middleware.processor.exception.ValidationException;
+import com.middleware.processor.service.interfaces.ClientService;
+import com.middleware.processor.dto.ClientOnboardingDTO;
 import com.middleware.shared.model.Client;
 import com.middleware.shared.model.ClientStatus;
+import com.middleware.shared.model.Interface;
+import com.middleware.shared.model.AsnHeader;
+import com.middleware.shared.model.AsnLine;
+import com.middleware.shared.model.OrderHeader;
+import com.middleware.shared.model.OrderLine;
+import com.middleware.shared.model.MappingRule;
+import com.middleware.shared.model.ProcessedFile;
 import com.middleware.shared.model.connectors.SftpConfig;
 import com.middleware.shared.repository.ClientRepository;
 import com.middleware.shared.repository.ProcessedFileRepository;
@@ -13,16 +22,19 @@ import com.middleware.shared.repository.AsnLineRepository;
 import com.middleware.shared.repository.OrderHeaderRepository;
 import com.middleware.shared.repository.OrderLineRepository;
 import com.middleware.shared.repository.connectors.SftpConfigRepository;
-import com.middleware.processor.service.interfaces.ClientService;
 import com.middleware.shared.service.util.CircuitBreakerService;
-import com.middleware.processor.dto.ClientOnboardingDTO;
+import com.middleware.shared.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.middleware.shared.exception.ResourceNotFoundException;
+import com.middleware.processor.service.interfaces.AuditLogService;
+import com.middleware.shared.model.AuditLog;
+import java.time.LocalDateTime;
+import com.middleware.shared.repository.AuditLogRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,6 +57,8 @@ public class ClientServiceImpl implements ClientService {
     private final OrderLineRepository orderLineRepository;
     private final SftpConfigRepository sftpConfigRepository;
     private final CircuitBreakerService circuitBreakerService;
+    private final AuditLogService auditLogService;
+    private final AuditLogRepository auditLogRepository;
 
     @Autowired
     public ClientServiceImpl(
@@ -57,7 +71,9 @@ public class ClientServiceImpl implements ClientService {
             OrderHeaderRepository orderHeaderRepository,
             OrderLineRepository orderLineRepository,
             SftpConfigRepository sftpConfigRepository,
-            CircuitBreakerService circuitBreakerService) {
+            CircuitBreakerService circuitBreakerService,
+            AuditLogService auditLogService,
+            AuditLogRepository auditLogRepository) {
         this.clientRepository = clientRepository;
         this.processedFileRepository = processedFileRepository;
         this.mappingRuleRepository = mappingRuleRepository;
@@ -68,6 +84,8 @@ public class ClientServiceImpl implements ClientService {
         this.orderLineRepository = orderLineRepository;
         this.sftpConfigRepository = sftpConfigRepository;
         this.circuitBreakerService = circuitBreakerService;
+        this.auditLogService = auditLogService;
+        this.auditLogRepository = auditLogRepository;
     }
 
     @Override
@@ -155,16 +173,24 @@ public class ClientServiceImpl implements ClientService {
                     log.info("Starting deletion of client - Name: {}, Code: {}, ID: {}", 
                             client.getName(), client.getCode(), client.getId());
 
-                    // Delete related records in order to avoid foreign key constraints
-                    log.debug("Deleting processed files for client id: {}", id);
-                    processedFileRepository.deleteByClient_Id(id);
+                    // Set clientId to NULL in audit logs for this client
+                    auditLogRepository.setClientIdNullForClient(id);
 
-                    log.debug("Deleting mapping rules for client id: {}", id);
-                    mappingRuleRepository.deleteByClient_Id(id);
+                    // Delete orphaned mapping rules first
+                    log.debug("Deleting orphaned mapping rules for client id: {}", id);
+                    mappingRuleRepository.deleteByClient_IdAndInterfaceIsNull(id);
 
-                    log.debug("Deleting SFTP configs for client id: {}", id);
-                    List<SftpConfig> sftpConfigs = sftpConfigRepository.findByClient_Id(id);
-                    sftpConfigs.forEach(config -> sftpConfigRepository.deleteById(config.getId()));
+                    // Get all interfaces for this client
+                    List<Interface> interfaces = interfaceRepository.findByClient_Id(id);
+                    
+                    // For each interface, delete its mapping rules and processed files
+                    for (Interface interface_ : interfaces) {
+                        log.debug("Deleting mapping rules for interface id: {}", interface_.getId());
+                        mappingRuleRepository.deleteByInterfaceId(interface_.getId());
+                        
+                        log.debug("Deleting processed files for interface id: {}", interface_.getId());
+                        processedFileRepository.deleteByInterfaceId(interface_.getId());
+                    }
 
                     // Delete ASN records
                     log.debug("Deleting ASN lines for client id: {}", id);
@@ -183,6 +209,11 @@ public class ClientServiceImpl implements ClientService {
                     // Delete interfaces
                     log.debug("Deleting interfaces for client id: {}", id);
                     interfaceRepository.deleteByClient_Id(id);
+
+                    // Delete SFTP configs
+                    log.debug("Deleting SFTP configs for client id: {}", id);
+                    List<SftpConfig> sftpConfigs = sftpConfigRepository.findByClient_Id(id);
+                    sftpConfigs.forEach(config -> sftpConfigRepository.deleteById(config.getId()));
 
                     // Finally delete the client
                     log.debug("Deleting client record with id: {}", id);

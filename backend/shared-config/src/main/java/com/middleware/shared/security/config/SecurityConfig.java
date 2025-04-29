@@ -92,7 +92,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf
                 .csrfTokenRepository(csrfTokenRepository)
                 .csrfTokenRequestHandler(csrfTokenRequestHandler)
-                .ignoringRequestMatchers("/api/auth/**")  // Ignore CSRF for authentication endpoints
+                .ignoringRequestMatchers("/api/auth/**", "/api/health", "/api/processor/**")  // Ignore CSRF for public endpoints
             )
             // Add JWT filter explicitly before the UsernamePasswordAuthenticationFilter
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -101,17 +101,22 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/health").permitAll()
-                .requestMatchers("/api/processor/**").permitAll()  // Allow processor endpoints without authentication
+                .requestMatchers("/api/processor/**").permitAll()
+                .requestMatchers("/api").permitAll()  // Allow root API endpoint
                 .anyRequest().authenticated()
             )
             .exceptionHandling(exception -> exception
                 .authenticationEntryPoint((request, response, authException) -> {
                     logger.error("Authentication error: {}", authException.getMessage());
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                    response.setContentType("application/json");
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"" + authException.getMessage() + "\"}");
                 })
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
                     logger.error("Access denied: {}", accessDeniedException.getMessage());
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+                    response.setContentType("application/json");
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.getWriter().write("{\"error\":\"Forbidden\",\"message\":\"" + accessDeniedException.getMessage() + "\"}");
                 })
             );
 

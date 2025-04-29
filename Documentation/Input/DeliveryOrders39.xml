@@ -33,14 +33,14 @@
 			<tns:COD>0</tns:COD>
 		</tns:Header>
 		<tns:Items><tns:Item>
-				<tns:ItemID>1</tns:ItemID>
+				<tns:ItemID>3</tns:ItemID>
 				<tns:ProductCode>KITSOFRESH</tns:ProductCode>
 				<tns:ProductDescription>KIT VIAGEM SO FRESH</tns:ProductDescription>
 				<tns:Quantity>8</tns:Quantity>
 				<tns:VATRate>23</tns:VATRate>
 				<tns:UnitPrice>0</tns:UnitPrice>
 			</tns:Item><tns:Item>
-				<tns:ItemID>2</tns:ItemID>
+				<tns:ItemID>4</tns:ItemID>
 				<tns:ProductCode>SOLUCAOSOFRESH</tns:ProductCode>
 				<tns:ProductDescription>SOLUCAO SO FRESH</tns:ProductDescription>
 				<tns:Quantity>24</tns:Quantity>

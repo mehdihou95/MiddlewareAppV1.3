@@ -158,6 +158,13 @@ public class MappingController {
 
     @PostMapping("/rules")
     public ResponseEntity<MappingRule> createMappingRule(@RequestBody MappingRule mappingRule) {
+        // Backward compatibility: map xmlPath/databaseField if present
+        if (mappingRule.getSourceField() == null && mappingRule.getXmlPath() != null) {
+            mappingRule.setSourceField(mappingRule.getXmlPath());
+        }
+        if (mappingRule.getTargetField() == null && mappingRule.getDatabaseField() != null) {
+            mappingRule.setTargetField(mappingRule.getDatabaseField());
+        }
         MappingRule createdRule = mappingRuleService.createMappingRule(mappingRule);
         return ResponseEntity.ok(createdRule);
     }

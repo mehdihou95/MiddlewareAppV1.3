@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 
@@ -51,7 +52,7 @@ public class XmlProcessorServiceImpl implements XmlProcessorService {
     private ProcessedFileRepository processedFileRepository;
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public ProcessedFile processXmlFile(MultipartFile file, Interface interfaceEntity) throws ValidationException {
         log.debug("Processing XML file {} for interface {}", file.getOriginalFilename(), interfaceEntity.getName());
         
@@ -75,12 +76,26 @@ public class XmlProcessorServiceImpl implements XmlProcessorService {
                     return documentProcessingStrategyService.processDocument(processableFile, interfaceEntity);
                 } catch (Exception e) {
                     log.error("Error processing XML file {}: {}", file.getOriginalFilename(), e.getMessage(), e);
-                    throw new ValidationException("Failed to process XML file: " + e.getMessage(), e);
+                    ProcessedFile errorFile = new ProcessedFile();
+                    errorFile.setFileName(file.getOriginalFilename());
+                    errorFile.setStatus("ERROR");
+                    errorFile.setErrorMessage(e.getMessage());
+                    errorFile.setProcessedAt(LocalDateTime.now());
+                    errorFile.setInterfaceEntity(interfaceEntity);
+                    errorFile.setClient(interfaceEntity.getClient());
+                    return processedFileRepository.save(errorFile);
                 }
             },
             () -> {
-                log.warn("Circuit breaker fallback: Unable to process file {}", file.getOriginalFilename());
-                throw new ValidationException("Service unavailable: Circuit breaker open");
+                log.warn("Circuit breaker fallback: Creating error processed file for {}", file.getOriginalFilename());
+                ProcessedFile errorFile = new ProcessedFile();
+                errorFile.setFileName(file.getOriginalFilename());
+                errorFile.setStatus("ERROR");
+                errorFile.setErrorMessage("Service unavailable: Circuit breaker open");
+                errorFile.setProcessedAt(LocalDateTime.now());
+                errorFile.setInterfaceEntity(interfaceEntity);
+                errorFile.setClient(interfaceEntity.getClient());
+                return errorFile;
             }
         );
     }

@@ -195,4 +195,12 @@ public interface MappingRuleRepository extends BaseRepository<MappingRule> {
      * Find mapping rules by client ID and interface ID
      */
     List<MappingRule> findByClient_IdAndInterfaceEntity_Id(Long clientId, Long interfaceId);
+
+    /**
+     * Delete mapping rules by client ID where interface is null
+     */
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM MappingRule m WHERE m.client.id = :clientId AND m.interfaceEntity IS NULL")
+    void deleteByClient_IdAndInterfaceIsNull(@Param("clientId") Long clientId);
 } 

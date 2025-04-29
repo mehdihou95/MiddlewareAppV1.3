@@ -8,10 +8,28 @@ import java.util.Set;
 import java.util.Date;
 import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.NamedEntityGraphs;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedAttributeNode;
 
 @Entity
 @Table(name = "asn_headers")
 @AttributeOverride(name = "id", column = @Column(name = "asn_id"))
+@NamedEntityGraphs({
+    @NamedEntityGraph(
+        name = "AsnHeader.withClient",
+        attributeNodes = {
+            @NamedAttributeNode("client")
+        }
+    ),
+    @NamedEntityGraph(
+        name = "AsnHeader.withClientAndLines",
+        attributeNodes = {
+            @NamedAttributeNode("client"),
+            @NamedAttributeNode("lines")
+        }
+    )
+})
 @Getter
 @Setter
 public class AsnHeader extends BaseEntity {

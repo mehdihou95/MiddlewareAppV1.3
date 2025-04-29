@@ -466,25 +466,23 @@ public class MappingRuleServiceImpl implements MappingRuleService {
         if (mappingRule.getName() == null || mappingRule.getName().trim().isEmpty()) {
             throw new ValidationException("Mapping rule name is required");
         }
-        if (mappingRule.getXmlPath() == null || mappingRule.getXmlPath().trim().isEmpty()) {
-            throw new ValidationException("XML path is required");
+        if (mappingRule.getSourceField() == null || mappingRule.getSourceField().trim().isEmpty()) {
+            throw new ValidationException("Source field is required");
         }
-        if (mappingRule.getDatabaseField() == null || mappingRule.getDatabaseField().trim().isEmpty()) {
-            throw new ValidationException("Database field is required");
+        if (mappingRule.getTargetField() == null || mappingRule.getTargetField().trim().isEmpty()) {
+            throw new ValidationException("Target field is required");
         }
     }
 
     private void updateMappingRuleFields(MappingRule existingRule, MappingRule newRule) {
         existingRule.setName(newRule.getName());
         existingRule.setDescription(newRule.getDescription());
-        existingRule.setXmlPath(newRule.getXmlPath());
-        existingRule.setDatabaseField(newRule.getDatabaseField());
+        existingRule.setSourceField(newRule.getSourceField());
+        existingRule.setTargetField(newRule.getTargetField());
         existingRule.setTransformation(newRule.getTransformation());
         existingRule.setRequired(newRule.getRequired());
         existingRule.setDefaultValue(newRule.getDefaultValue());
         existingRule.setPriority(newRule.getPriority());
-        existingRule.setSourceField(newRule.getSourceField());
-        existingRule.setTargetField(newRule.getTargetField());
         existingRule.setValidationRule(newRule.getValidationRule());
         existingRule.setIsActive(newRule.getIsActive());
         existingRule.setTableName(newRule.getTableName());
