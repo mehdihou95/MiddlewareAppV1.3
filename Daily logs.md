@@ -57,5 +57,11 @@ Docker starts DB ➜ Empty Database Created ➜ Application Starts ➜ Flyway Ru
            ├── XmlProcessor
            └── XmlValidationService
 
-
+The packages and components are well-integrated and ready to be used by AsnDocumentProcessingStrategy.java. The strategy can:
+Create and save ASN headers and lines
+Apply mapping rules
+Validate data
+Handle transactions
+Manage relationships
+Handle errors and circuit breaking
 --------------------------------------------------------------------------------------------
