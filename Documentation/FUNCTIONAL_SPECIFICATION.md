@@ -1,7 +1,9 @@
 # XML Middleware Application - Functional Specification
 
 ## 1. Overview
-The XML Middleware Application is a multi-tenant system designed to process and transform XML documents according to client-specific rules. It provides a secure, scalable platform for handling XML data transformation with support for multiple clients and interfaces. The system supports both direct file uploads and automated processing through SFTP integration.
+The XML Middleware Application is a multi-tenant system designed to process and transform XML documents according to client-specific rules. It provides a secure, scalable platform for handling XML data transformation with support for multiple clients and interfaces. The system supports two processing modes:
+1. Synchronous Processing: Direct file uploads with immediate validation and response
+2. Asynchronous Processing: RabbitMQ-based queue processing with retry mechanisms
 
 ## 2. User Roles and Access Control
 ### 2.1 Admin Users (ROLE_ADMIN)
@@ -13,6 +15,8 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Audit log access
 - System monitoring
 - SFTP configuration management
+- Queue management
+- Cache management
 
 ### 2.2 Regular Users (ROLE_USER)
 - Read-only access to client data
@@ -22,6 +26,7 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - View audit logs for assigned clients
 - File upload capabilities
 - View processing status
+- Access monitoring dashboards
 
 ## 3. Core Features
 
@@ -52,6 +57,8 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Client context isolation
 - Client selection in UI
 - Client data persistence in H2 database
+- Client-specific monitoring
+- Client-specific caching rules
 
 ### 3.3 Security Features
 - HTTPS encryption for all communications
@@ -66,6 +73,7 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Session management
 - SFTP security configuration
 - RabbitMQ security configuration
+- Redis security configuration
 
 ### 3.4 Frontend Features
 - Modern Material-UI based interface
@@ -81,6 +89,8 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - File upload interface
 - Processing status tracking
 - SFTP configuration interface
+- Monitoring dashboards
+- Cache management interface
 
 ### 3.5 API Security
 - JWT authentication required for all non-auth endpoints
@@ -94,6 +104,7 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Debug logging for API operations
 - SFTP endpoint security
 - RabbitMQ endpoint security
+- Redis endpoint security
 
 ### 3.6 XML Processing
 - Upload and validate XML files
@@ -108,6 +119,15 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Processing status tracking
 - Automated SFTP processing
 - RabbitMQ message processing
+- Two processing modes:
+  * Synchronous: Direct upload with immediate response
+  * Asynchronous: Queue-based processing with retry
+- Advanced features:
+  * Smart batching with dynamic sizing
+  * Dead Letter Queue (DLQ) handling
+  * Schema version management
+  * Validation result caching
+  * File storage and metadata tracking
 
 ### 3.7 Mapping Rules
 - Dynamic rule loading by client and interface
@@ -119,6 +139,8 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Priority-based processing
 - Client-specific rule sets
 - Interface-specific configurations
+- Rule versioning
+- Rule caching
 
 ### 3.8 Interface Management
 - Configure input/output interfaces
@@ -128,6 +150,8 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Interface-specific validation
 - SFTP interface configuration
 - RabbitMQ interface configuration
+- Interface-specific caching rules
+- Interface monitoring
 
 ### 3.9 Audit Logging
 - Comprehensive activity tracking
@@ -139,6 +163,8 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - File processing logs
 - SFTP operation logs
 - RabbitMQ message logs
+- Cache operation logs
+- Monitoring metrics
 
 ## 4. User Interface Requirements
 
@@ -151,6 +177,10 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Client-specific views
 - SFTP status monitoring
 - Processing queue status
+- Cache statistics
+- System health metrics
+- Batch processing metrics
+- Queue depth monitoring
 
 ### 4.2 File Upload Interface
 - Drag-and-drop functionality
@@ -160,6 +190,9 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Error reporting
 - Processing status updates
 - File history tracking
+- Processing mode selection
+- Batch size configuration
+- Queue depth display
 
 ### 4.3 Rule Management Interface
 - Rule editor
@@ -168,6 +201,8 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Documentation tools
 - Validation feedback
 - Client-specific rules
+- Rule caching status
+- Rule performance metrics
 
 ### 4.4 Reporting Interface
 - Processing history
@@ -178,6 +213,11 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Export capabilities
 - SFTP operation reports
 - Message queue reports
+- Cache performance reports
+- System health reports
+- Two processing modes:
+  * Synchronous: Real-time processing reports
+  * Asynchronous: Queue-based processing reports
 
 ### 4.5 Audit Log Interface
 - Filterable log viewer
@@ -188,6 +228,8 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Export functionality
 - SFTP operation logs
 - Message queue logs
+- Cache operation logs
+- System event logs
 
 ## 5. Business Rules
 
@@ -196,11 +238,18 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Processing must follow client-specific rules
 - Failed validations must be logged
 - Processed files must be archived
-- Asynchronous processing for large files
-- Automatic retry for failed processing
-- Comprehensive error handling
+- Two processing modes:
+  * Synchronous: Direct upload with immediate response
+  * Asynchronous: Queue-based processing with retry
+- Advanced features:
+  * Smart batching with dynamic sizing
+  * Dead Letter Queue (DLQ) handling
+  * Schema version management
+  * Validation result caching
+  * File storage and metadata tracking
 - SFTP file monitoring
 - RabbitMQ message processing
+- Cache management
 
 ### 5.2 Security
 - Complete data isolation between clients using ClientContextHolder
@@ -215,17 +264,25 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Rate limiting for API endpoints
 - SFTP security configuration
 - RabbitMQ security configuration
+- Redis security configuration
 
 ### 5.3 Performance
-- Process files within 30 seconds
+- Process files within 30 seconds (synchronous mode)
 - Support concurrent processing
 - Handle files up to 100MB
 - Maintain 99.9% uptime
-- Asynchronous processing
-- Caching for frequently accessed data
-- Optimized database queries
+- Two processing modes:
+  * Synchronous: Direct upload with immediate response
+  * Asynchronous: Queue-based processing with retry
+- Advanced features:
+  * Smart batching with dynamic sizing
+  * Dead Letter Queue (DLQ) handling
+  * Schema version management
+  * Validation result caching
+  * File storage and metadata tracking
 - SFTP polling interval: 60 seconds
 - RabbitMQ message processing optimization
+- Redis cache optimization
 
 ## 6. Compliance Requirements
 - GDPR compliance for EU data
@@ -237,6 +294,7 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Access control
 - SFTP security compliance
 - Message queue security compliance
+- Cache security compliance
 
 ## 7. Error Handling
 - Clear error messages
@@ -248,6 +306,10 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - System error handling
 - SFTP error handling
 - RabbitMQ error handling
+- Cache error handling
+- Two processing modes:
+  * Synchronous: Immediate error response
+  * Asynchronous: Queue-based error handling
 
 ## 8. Reporting Requirements
 - Processing statistics
@@ -259,6 +321,10 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - System health reports
 - SFTP operation reports
 - Message queue reports
+- Cache performance reports
+- Two processing modes:
+  * Synchronous: Real-time processing reports
+  * Asynchronous: Queue-based processing reports
 
 ## 9. Integration Requirements
 - REST API support
@@ -270,10 +336,14 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Audit logging integration
 - SFTP integration
 - RabbitMQ integration
+- Redis integration
+- Two processing modes:
+  * Synchronous: Direct API integration
+  * Asynchronous: Queue-based integration
 
 ## 10. Service Level Agreements
 - 99.9% system availability
-- Maximum 30-second processing time
+- Maximum 30-second processing time (synchronous mode)
 - 24/7 system monitoring
 - Regular backup procedures
 - Comprehensive audit logging
@@ -281,6 +351,10 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Performance monitoring
 - SFTP monitoring
 - Message queue monitoring
+- Cache monitoring
+- Two processing modes:
+  * Synchronous: Immediate response SLA
+  * Asynchronous: Queue-based processing SLA
 
 ## 11. Technical Implementation Details
 
@@ -311,6 +385,7 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 8. Secure session management
 9. SFTP security configuration
 10. RabbitMQ security configuration
+11. Redis security configuration
 
 ## 12. Current Implementation Status
 
@@ -340,6 +415,17 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - File processing status tracking
 - Multi-tenant support
 - Client context isolation
+- Two processing modes:
+  * Synchronous: Direct upload with immediate response
+  * Asynchronous: Queue-based processing with retry
+- Advanced features:
+  * Smart batching with dynamic sizing
+  * Dead Letter Queue (DLQ) handling
+  * Schema version management
+  * Validation result caching
+  * File storage and metadata tracking
+  * Circuit breaker pattern
+  * Comprehensive monitoring
 
 ### 12.2 In Progress
 - Additional document type support
@@ -348,6 +434,9 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 - Error handling improvements
 - Testing coverage
 - Documentation updates
+- Cache optimization
+- Queue management
+- Monitoring enhancements
 
 ### 12.3 Known Issues
 1. XML path validation edge cases
@@ -355,6 +444,9 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 3. Error message standardization
 4. Performance optimization needed
 5. Documentation updates required
+6. Cache invalidation timing
+7. Queue depth management
+8. Resource utilization
 
 ### 12.4 Next Steps
 1. Add support for additional document types
@@ -362,4 +454,8 @@ The XML Middleware Application is a multi-tenant system designed to process and 
 3. Optimize performance
 4. Improve error handling
 5. Add comprehensive testing
-6. Update documentation 
+6. Update documentation
+7. Optimize caching
+8. Enhance monitoring
+9. Improve queue management
+10. Implement advanced features 

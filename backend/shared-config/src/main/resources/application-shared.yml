@@ -31,6 +31,20 @@ spring:
           core-thread-pool-size: 2
           max-thread-pool-size: 4
           queue-capacity: 50
+    circuitbreaker:
+      configs:
+        default:
+          failure-rate-threshold: 50
+          wait-duration-in-open-state: 10000
+          permitted-number-of-calls-in-half-open-state: 10
+          sliding-window-size: 100
+          sliding-window-type: COUNT_BASED
+          minimum-number-of-calls: 10
+    timelimiter:
+      configs:
+        default:
+          timeout-duration: 2s
+          cancel-running-future: true
   
   # Flyway Configuration
   flyway:
@@ -100,28 +114,46 @@ logging:
     max-size: 10MB
     max-history: 7
 
-# Common Actuator Configuration
+# Enhanced Actuator and Monitoring Configuration
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,circuitbreakers
+      base-path: /actuator
   endpoint:
     health:
       show-details: when_authorized
       roles: ADMIN
+      probes:
+        enabled: true
     prometheus:
       enabled: true
   metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
     tags:
       application: ${spring.application.name:middleware}
     export:
       prometheus:
         enabled: true
+        step: 1m
+        descriptions: true
   health:
     defaults:
       enabled: true
     rabbitmq:
       enabled: true
     db:
+      enabled: true
+    diskspace:
+      enabled: true
+      path: ${user.dir}
+      threshold: 10MB
+    ping:
+      enabled: true
+    livenessstate:
+      enabled: true
+    readinessstate:
       enabled: true 

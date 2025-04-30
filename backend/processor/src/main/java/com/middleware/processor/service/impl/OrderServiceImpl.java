@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;															  
 import com.middleware.shared.exception.ResourceNotFoundException;
 
 import java.time.LocalDate;
@@ -93,7 +94,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public Optional<OrderHeader> findByOrderNumberAndClient_Id(String orderNumber, Long clientId) {
         return circuitBreakerService.executeRepositoryOperation(
-            () -> orderHeaderRepository.findByOrderNumberAndClient_Id(orderNumber, clientId),
+            () -> orderHeaderRepository.findByOrderNumberAndClient_IdWithClientAndLines(orderNumber, clientId),
             Optional::empty // Fallback: return empty optional
         );
     }
@@ -108,21 +109,31 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public OrderHeader createOrderHeader(OrderHeader header) {
         validateOrderHeader(header);
         return circuitBreakerService.executeRepositoryOperation(
-            () -> orderHeaderRepository.save(header),
+		 () -> {
+                // Save the header with entity graph
+                OrderHeader savedHeader = orderHeaderRepository.save(header);
+                
+                // Verify ID was generated
+                if (savedHeader.getId() == null) {
+                    throw new ValidationException("Failed to generate ID for ASN Header");
+                }
+                
+                // Return the saved header with entity graph
+                return savedHeader;
+            },
             () -> {
-                // Fallback: return the original header with error status    
-                header.setStatus("ERROR");
+                header.setStatus("ERROR - Circuit breaker open");
                 return header;
             }
         );
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public OrderHeader updateOrderHeader(Long id, OrderHeader headerDetails) {
         return circuitBreakerService.executeRepositoryOperation(
             () -> {
@@ -153,7 +164,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteOrderHeader(Long id) {
 		
         circuitBreakerService.executeVoidRepositoryOperation(
@@ -190,10 +201,10 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<OrderLine> getOrderLineById(Long id) {
+    public Page<OrderLine> getOrderLinesByHeader_Id(Long headerId, Pageable pageable) {
         return circuitBreakerService.executeRepositoryOperation(
-            () -> orderLineRepository.findById(id),
-            Optional::empty // Fallback: return empty optional
+            () -> orderLineRepository.findByOrderHeader_Id(headerId, pageable),
+            () -> Page.empty(pageable)
         );
     }
 
@@ -202,15 +213,6 @@ public class OrderServiceImpl implements OrderService {
     public Page<OrderLine> getAllOrderLines(Pageable pageable) {
         return circuitBreakerService.executeRepositoryOperation(
             () -> orderLineRepository.findAll(pageable),
-            () -> Page.empty(pageable) // Fallback: return empty page
-        );
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<OrderLine> getOrderLinesByHeader_Id(Long headerId, Pageable pageable) {
-        return circuitBreakerService.<Page<OrderLine>>executeRepositoryOperation(
-            () -> orderLineRepository.findByOrderHeader_Id(headerId, pageable),
             () -> Page.empty(pageable)
         );
     }
@@ -270,7 +272,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public OrderLine createOrderLine(OrderLine line) {
         validateOrderLine(line);
         return circuitBreakerService.executeRepositoryOperation(
@@ -284,7 +286,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public OrderLine updateOrderLine(Long id, OrderLine lineDetails) {
         return circuitBreakerService.executeRepositoryOperation(
             () -> {
@@ -314,7 +316,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteOrderLine(Long id) {
         circuitBreakerService.executeVoidRepositoryOperation(
             () -> {
@@ -331,18 +333,38 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public List<OrderLine> createOrderLines(List<OrderLine> lines) {
+		if (lines == null || lines.isEmpty()) {
+            return List.of();
+        }
+		
         return circuitBreakerService.executeRepositoryOperation(
             () -> {
-                for (OrderLine line : lines) {
-                    validateOrderLine(line);
+                         // Validate all lines first
+                lines.forEach(this::validateOrderLine);
+                
+                // Ensure all lines have the same header and client
+                OrderHeader header = lines.get(0).getOrderHeader();
+                if (header == null) {
+                    throw new ValidationException("Header must be specified for ASN Lines");
                 }
+                
+                lines.forEach(line -> {
+                    if (!header.equals(line.getOrderHeader())) {
+                        throw new ValidationException("All lines must belong to the same header");
+                    }
+                    if (!header.getClient().equals(line.getClient())) {
+                        throw new ValidationException("All lines must belong to the same client as the header");
+                    }
+                });
+                
+                // Save all lines in a batch					
                 return orderLineRepository.saveAll(lines);
             },
             () -> {
                 // Fallback: return the original lines with error status
-                lines.forEach(line -> line.setStatus("ERROR"));
+                lines.forEach(line -> line.setStatus("ERROR - Circuit breaker open"));
                 return lines;
             }
         );
@@ -354,6 +376,15 @@ public class OrderServiceImpl implements OrderService {
         return circuitBreakerService.executeRepositoryOperation(
             () -> orderHeaderRepository.findByOrderNumber(orderNumber),
             () -> Optional.<OrderHeader>empty() // Fallback: return empty optional
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<OrderLine> getOrderLineById(Long id) {
+        return circuitBreakerService.executeRepositoryOperation(
+            () -> orderLineRepository.findById(id),
+            Optional::empty
         );
     }
 
@@ -369,6 +400,12 @@ public class OrderServiceImpl implements OrderService {
     private void validateOrderLine(OrderLine orderLine) {
         if (orderLine.getOrderHeader() == null || orderLine.getOrderHeader().getId() == null) {
             throw new ValidationException("Order header is required");
+        }
+        if (orderLine.getOrderHeader() == null) {
+            throw new ValidationException("Header must be specified for ASN Line");
+        }
+        if (orderLine.getClient() == null) {
+            throw new ValidationException("Client must be specified for ASN Line");
         }
         if (orderLine.getItemNumber() == null || orderLine.getItemNumber().trim().isEmpty()) {
             throw new ValidationException("Item number is required");

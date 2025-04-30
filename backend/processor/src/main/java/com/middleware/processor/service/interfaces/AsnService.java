@@ -222,7 +222,7 @@ public interface AsnService {
     void deleteAsnLine(Long id);
 
     /**
-     * Create multiple ASN lines.
+     * Create multiple ASN lines in a batch operation.
      *
      * @param lines The list of ASN lines to create
      * @return The list of created ASN lines
@@ -245,4 +245,19 @@ public interface AsnService {
      * @return Page of ASN lines
      */
     Page<AsnLine> getAsnLinesByHeader_Id(Long headerId, Pageable pageable);
+
+    /**
+     * Creates multiple ASN headers in a batch operation
+     */
+    List<AsnHeader> createAsnHeaders(List<AsnHeader> headers);
+
+    /**
+     * Updates multiple ASN lines in a batch operation
+     */
+    List<AsnLine> updateAsnLines(List<AsnLine> lines);
+
+    /**
+     * Deletes multiple ASN headers and their associated lines in a batch operation
+     */
+    void deleteAsnHeaders(List<Long> ids);
 } 

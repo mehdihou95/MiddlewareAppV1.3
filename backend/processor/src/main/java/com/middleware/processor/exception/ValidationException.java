@@ -2,12 +2,15 @@ package com.middleware.processor.exception;
 
 import com.middleware.shared.exception.BaseValidationException;
 import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Processor-specific validation exception.
  * Extends BaseValidationException to provide additional functionality specific to the processor module.
  */
-public class ValidationException extends BaseValidationException {
+public class ValidationException extends RuntimeException {
+    
+    private final Map<String, String> fieldErrors = new HashMap<>();
     
     /**
      * Constructs a new ValidationException with the specified message.
@@ -35,7 +38,27 @@ public class ValidationException extends BaseValidationException {
      * @param fieldErrors Map of field names to error messages
      */
     public ValidationException(String message, Map<String, String> fieldErrors) {
-        super(message, fieldErrors);
+        super(message);
+        this.fieldErrors.putAll(fieldErrors);
+    }
+    
+    /**
+     * Add a field error to the exception.
+     *
+     * @param fieldName The name of the field with the error
+     * @param errorMessage The error message for the field
+     */
+    public void addFieldError(String fieldName, String errorMessage) {
+        fieldErrors.put(fieldName, errorMessage);
+    }
+    
+    /**
+     * Get all field errors.
+     *
+     * @return Map of field names to error messages
+     */
+    public Map<String, String> getFieldErrors() {
+        return new HashMap<>(fieldErrors);
     }
     
     /**

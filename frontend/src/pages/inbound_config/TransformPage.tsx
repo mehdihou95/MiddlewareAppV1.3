@@ -208,6 +208,30 @@ const TransformPage: React.FC = () => {
     }
   };
 
+  const validateMappingRule = (rule: MappingRule): string | null => {
+    // Get the interface type from the selected interface
+    const interfaceType = selectedInterface?.type;
+    
+    // Validate target level and table name based on interface type
+    if (interfaceType === 'ORDER') {
+      if (rule.targetLevel === 'HEADER' && rule.tableName !== 'ORDER_HEADERS') {
+        return 'Header level mappings must use ORDER_HEADERS table';
+      }
+      if (rule.targetLevel === 'LINE' && rule.tableName !== 'ORDER_LINES') {
+        return 'Line level mappings must use ORDER_LINES table';
+      }
+    } else if (interfaceType === 'ASN') {
+      if (rule.targetLevel === 'HEADER' && rule.tableName !== 'ASN_HEADERS') {
+        return 'Header level mappings must use ASN_HEADERS table';
+      }
+      if (rule.targetLevel === 'LINE' && rule.tableName !== 'ASN_LINES') {
+        return 'Line level mappings must use ASN_LINES table';
+      }
+    }
+
+    return null;
+  };
+
   const handleSaveMapping = async () => {
     if (!selectedClient || !selectedInterface) {
       setSnackbar({
@@ -223,6 +247,17 @@ const TransformPage: React.FC = () => {
         setSnackbar({
           open: true,
           message: 'Please select both XML element and database field',
+          severity: 'error'
+        });
+        return;
+      }
+
+      // Validate the mapping rule
+      const validationError = validateMappingRule(newMapping);
+      if (validationError) {
+        setSnackbar({
+          open: true,
+          message: validationError,
           severity: 'error'
         });
         return;
@@ -631,13 +666,33 @@ const TransformPage: React.FC = () => {
                 <InputLabel>Target Level</InputLabel>
                 <Select
                   value={newMapping.targetLevel || 'HEADER'}
-                  onChange={(e) => setNewMapping({...newMapping, targetLevel: e.target.value as 'HEADER' | 'LINE'})}
+                  onChange={(e) => {
+                    const targetLevel = e.target.value as 'HEADER' | 'LINE';
+                    const tableName = selectedInterface?.type === 'ASN' 
+                      ? (targetLevel === 'HEADER' ? 'ASN_HEADERS' : 'ASN_LINES')
+                      : (targetLevel === 'HEADER' ? 'ORDER_HEADERS' : 'ORDER_LINES');
+                    
+                    setNewMapping({
+                      ...newMapping,
+                      targetLevel,
+                      tableName
+                    });
+                  }}
                   label="Target Level"
                 >
                   <MenuItem value="HEADER">Header</MenuItem>
                   <MenuItem value="LINE">Line</MenuItem>
                 </Select>
               </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Table Name"
+                value={newMapping.tableName || (selectedInterface?.type === 'ASN' ? 'ASN_HEADERS' : 'ORDER_HEADERS')}
+                disabled
+                helperText={`Automatically set based on target level for ${selectedInterface?.type || 'ORDER'} flow`}
+              />
             </Grid>
           </Grid>
         </DialogContent>

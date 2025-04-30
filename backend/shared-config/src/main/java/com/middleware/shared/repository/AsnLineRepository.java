@@ -124,4 +124,11 @@ public interface AsnLineRepository extends BaseRepository<AsnLine> {
      * @return List of ASN lines
      */
     List<AsnLine> findByClient_IdAndQuantityGreaterThan(Long clientId, Integer quantity);
+
+    /**
+     * Delete ASN lines by header IDs
+     *
+     * @param headerIds List of header IDs
+     */
+    void deleteByHeaderIdIn(List<Long> headerIds);
 } 

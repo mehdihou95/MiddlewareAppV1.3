@@ -17,6 +17,9 @@ spring:
     port: 5672
     username: admin
     password: admin
+    queue:
+      inbound:
+        processor: inbound.processor
     listener:
       simple:
         retry:
@@ -24,9 +27,25 @@ spring:
           initial-interval: 5000
           max-attempts: 3
           multiplier: 2
+        acknowledge-mode: manual
+        prefetch: 1
+        concurrency: 1
+        max-concurrency: 3
     connection-factory:
       concurrent-consumers: 3
       max-concurrent-consumers: 10
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    database: 0
+    timeout: 5000
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1
 
 # Service-specific Logging
 logging:
@@ -58,4 +77,23 @@ xml:
 
 # SFTP Configuration
 sftp:
-  root: ${SFTP_ROOT:/sftp_root} 
+  root: ${SFTP_ROOT:/sftp_root}
+
+# Batch Processing Configuration
+batch:
+  core-pool-size: 5
+  max-pool-size: 10
+  queue-capacity: 25
+  thread-name-prefix: BatchProcessor-
+  size: 100
+  timeout-seconds: 300
+  min-size: 10
+  max-size: 100
+  queue-depth-threshold: 1000
+  adjustment-step: 10
+
+# Cache Configuration
+cache:
+  validation:
+    ttl: 3600  # 1 hour in seconds
+    max-size: 10000 

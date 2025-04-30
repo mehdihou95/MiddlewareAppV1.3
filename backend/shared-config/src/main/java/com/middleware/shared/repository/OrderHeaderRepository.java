@@ -3,6 +3,7 @@ package com.middleware.shared.repository;
 import com.middleware.shared.model.OrderHeader;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;														   
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,11 +18,14 @@ import java.util.Optional;
 @Repository
 public interface OrderHeaderRepository extends BaseRepository<OrderHeader> {
     
+    @Override
+    @EntityGraph(value = "OrderHeader.withClientAndOrderLines")
+    <S extends OrderHeader> S save(S entity);			 
     /**
      * Find order by ID and client ID
      */
     @Query("SELECT h FROM OrderHeader h WHERE h.id = :orderId AND h.client.id = :clientId")
-    Optional<OrderHeader> findByIdAndClient_Id(
+    Optional<OrderHeader> findByIdAndClient_IdWithClient(
         @Param("orderId") Long orderId,
         @Param("clientId") Long clientId);
     
@@ -29,15 +33,16 @@ public interface OrderHeaderRepository extends BaseRepository<OrderHeader> {
      * Find order headers by client ID with pagination
      */
     @Query("SELECT h FROM OrderHeader h WHERE h.client.id = :clientId")
-    Page<OrderHeader> findByClient_Id(
+    Page<OrderHeader> findByClient_IdWithClient(
         @Param("clientId") Long clientId,
         Pageable pageable);
     
     /**
      * Find order header by order number and client ID
      */
+	@EntityGraph(value = "OrderHeader.withClientAndOrderLines")													
     @Query("SELECT h FROM OrderHeader h WHERE h.orderNumber = :orderNumber AND h.client.id = :clientId")
-    Optional<OrderHeader> findByOrderNumberAndClient_Id(
+    Optional<OrderHeader> findByOrderNumberAndClient_IdWithClientAndLines(
         @Param("orderNumber") String orderNumber,
         @Param("clientId") Long clientId);
     

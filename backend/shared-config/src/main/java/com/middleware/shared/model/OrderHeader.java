@@ -2,7 +2,15 @@ package com.middleware.shared.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.Setter;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Date;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.NamedEntityGraphs;
+import jakarta.persistence.NamedEntityGraph;
+import jakarta.persistence.NamedAttributeNode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +19,21 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 @Entity
 @Table(name = "order_headers")
 @AttributeOverride(name = "id", column = @Column(name = "order_id"))
+@NamedEntityGraphs({
+    @NamedEntityGraph(
+        name = "OrderHeader.withClient",
+        attributeNodes = {
+            @NamedAttributeNode("client")
+        }
+    ),
+    @NamedEntityGraph(
+        name = "OrderHeader.withClientAndOrderLines",
+        attributeNodes = {
+            @NamedAttributeNode("client"),
+            @NamedAttributeNode("orderLines")
+        }
+    )
+})
 @Getter
 @Setter
 public class OrderHeader extends BaseEntity {
@@ -38,10 +61,6 @@ public class OrderHeader extends BaseEntity {
 
     @Column(name = "notes", length = 500)
     private String notes;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id", nullable = false)
-    private Client client;
 
     @Column(name = "ext_purchase_order", length = 50)
     private String extPurchaseOrder;
@@ -169,10 +188,10 @@ public class OrderHeader extends BaseEntity {
     @Column(name = "incoterm_loc_ava_time_zone_id")
     private Long incotermLocAvaTimeZoneId;
 
-    @Column(name = "pickup_tz", nullable = false)
+    @Column(name = "pickup_tz", nullable = true)
     private Integer pickupTz;
 
-    @Column(name = "delivery_tz", nullable = false)
+    @Column(name = "delivery_tz", nullable = true)
     private Integer deliveryTz;
 
     @Column(name = "pickup_start_dttm")
@@ -337,7 +356,7 @@ public class OrderHeader extends BaseEntity {
 
     @OneToMany(mappedBy = "orderHeader", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<OrderLine> orderLines = new ArrayList<>();
+    private Set<OrderLine> orderLines = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {

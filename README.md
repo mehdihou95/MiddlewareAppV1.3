@@ -14,13 +14,17 @@ This application is a multi-tenant middleware solution for processing XML files 
 - JWT-based authentication with token refresh
 - Client performance monitoring
 - Comprehensive error handling and logging
-- Asynchronous file processing
-- Automatic retry mechanism for failed processing
-- Audit logging system
-- Caching for improved performance
-- Server-side pagination and sorting
-- Client-specific data isolation
-- Comprehensive security features
+- Two processing modes:
+  * Asynchronous: RabbitMQ-based queue processing
+  * Synchronous: Direct file upload processing
+- Advanced features:
+  * Smart batching with dynamic sizing
+  * Dead Letter Queue (DLQ) and retry mechanisms
+  * Schema version management
+  * Validation result caching
+  * File storage and metadata tracking
+  * Circuit breaker pattern for resilience
+  * Comprehensive monitoring and metrics
 
 ## Prerequisites
 
@@ -29,6 +33,8 @@ This application is a multi-tenant middleware solution for processing XML files 
 - Maven 3.6 or higher
 - Git
 - PostgreSQL 13+ (for production)
+- Redis 6+ (for caching)
+- RabbitMQ 3.8+ (for async processing)
 
 ## Project Structure
 
@@ -39,41 +45,35 @@ This application is a multi-tenant middleware solution for processing XML files 
 │   │   ├── main/
 │   │   │   ├── java/
 │   │   │   │   └── com/
-│   │   │   │       └── xml/
-│   │   │   │           └── processor/
-│   │   │   │               ├── annotation/  # Custom annotations
-│   │   │   │               ├── aspect/      # AOP aspects
-│   │   │   │               ├── config/      # Configuration classes
-│   │   │   │               ├── controller/  # REST controllers
-│   │   │   │               ├── converter/   # Data converters
-│   │   │   │               ├── dto/         # Data Transfer Objects
-│   │   │   │               ├── exception/   # Custom exceptions
-│   │   │   │               ├── filter/      # Security filters
-│   │   │   │               ├── mapper/      # Data mappers
-│   │   │   │               ├── model/       # Domain models
-│   │   │   │               ├── repository/  # Data access layer
-│   │   │   │               ├── security/    # Security configuration
-│   │   │   │               ├── service/     # Business logic
-│   │   │   │               └── validation/  # Validation logic
-│   │   │   └── resources/     # Configuration and migrations
-│   │   └── test/             # Test files
-│   └── pom.xml               # Maven configuration
-├── frontend/                # React TypeScript frontend
+│   │   │   │       └── middleware/
+│   │   │   │           ├── processor/     # Processing module
+│   │   │   │           │   ├── config/    # Configuration classes
+│   │   │   │           │   ├── service/   # Business logic
+│   │   │   │           │   ├── validation/# Validation logic
+│   │   │   │           │   └── cache/     # Caching components
+│   │   │   │           └── shared/        # Shared module
+│   │   │   │               ├── model/     # Domain models
+│   │   │   │               ├── repository/# Data access layer
+│   │   │   │               └── config/    # Shared configuration
+│   │   │   └── resources/  # Configuration and migrations
+│   │   └── test/          # Test files
+│   └── pom.xml            # Maven configuration
+├── frontend/              # React TypeScript frontend
 │   ├── src/
-│   │   ├── components/     # React components
-│   │   ├── config/        # Configuration files
-│   │   ├── context/       # React context providers
-│   │   ├── pages/         # Page components
-│   │   ├── services/      # API services
-│   │   ├── types/         # TypeScript types
-│   │   ├── utils/         # Utility functions
-│   │   ├── App.tsx        # Main application component
-│   │   └── index.tsx      # Application entry point
-│   ├── public/            # Static files
-│   ├── package.json       # npm configuration
-│   └── tsconfig.json      # TypeScript configuration
-├── docs/                  # Documentation files
-└── Input/                # Sample XML input files
+│   │   ├── components/   # React components
+│   │   ├── config/      # Configuration files
+│   │   ├── context/     # React context providers
+│   │   ├── pages/       # Page components
+│   │   ├── services/    # API services
+│   │   ├── types/       # TypeScript types
+│   │   ├── utils/       # Utility functions
+│   │   ├── App.tsx      # Main application component
+│   │   └── index.tsx    # Application entry point
+│   ├── public/          # Static files
+│   ├── package.json     # npm configuration
+│   └── tsconfig.json    # TypeScript configuration
+├── docs/                # Documentation files
+└── Input/              # Sample XML input files
 ```
 
 ## Setup
@@ -107,6 +107,10 @@ npm start
   - Username: sa
   - Password: password
 - Swagger UI: http://localhost:8080/swagger-ui.html
+- RabbitMQ Management: http://localhost:15672
+  - Username: guest
+  - Password: guest
+- Redis Commander: http://localhost:8081
 
 ## Default Users
 
@@ -145,31 +149,25 @@ The application comes with predefined users:
 - `PUT /api/interfaces/{id}` - Update interface
 - `DELETE /api/interfaces/{id}` - Delete interface
 
-### Mapping Rules
-- `GET /api/mapping-rules` - List mapping rules
-- `POST /api/mapping-rules` - Create mapping rule
-- `GET /api/mapping-rules/{id}` - Get rule details
-- `PUT /api/mapping-rules/{id}` - Update rule
-- `DELETE /api/mapping-rules/{id}` - Delete rule
-
 ### File Processing
-- `POST /api/files/upload` - Upload XML file
+- `POST /api/files/upload` - Upload XML file (Synchronous)
+- `POST /api/files/queue` - Queue XML file (Asynchronous)
 - `GET /api/files/process/{id}` - Process file
 - `GET /api/files/status/{id}` - Check processing status
 - `POST /api/files/retry/{id}` - Retry failed processing
+- `GET /api/files/metadata/{id}` - Get file metadata
 
-### Audit Logs
-- `GET /api/audit-logs` - List audit logs
-- `GET /api/audit-logs/{id}` - Get log details
-- `GET /api/audit-logs/user/{username}` - Get user logs
-- `GET /api/audit-logs/client/{clientId}` - Get client logs
-- `GET /api/audit-logs/date-range` - Get logs by date range
+### Monitoring
+- `GET /api/monitoring/batch` - Get batch processing metrics
+- `GET /api/monitoring/queue` - Get queue metrics
+- `GET /api/monitoring/cache` - Get cache metrics
+- `GET /api/monitoring/health` - Get system health status
 
 ## Configuration
 
 ### Backend Configuration
-File: `backend/src/main/resources/application.properties`
-```properties
+File: `backend/src/main/resources/application.yml`
+```yaml
 # Database Configuration
 spring.datasource.url=jdbc:h2:file:./data/middleware
 spring.datasource.username=sa
@@ -192,12 +190,40 @@ spring.servlet.multipart.max-file-size=100MB
 spring.servlet.multipart.max-request-size=100MB
 
 # Cache Configuration
-spring.cache.type=caffeine
-spring.cache.caffeine.spec=maximumSize=500,expireAfterAccess=600s
+spring.cache.type=redis
+spring.redis.host=localhost
+spring.redis.port=6379
+spring.redis.password=
+spring.redis.database=0
 
-# Logging Configuration
-logging.level.root=INFO
-logging.level.com.xml.processor=DEBUG
+# RabbitMQ Configuration
+spring.rabbitmq.host=localhost
+spring.rabbitmq.port=5672
+spring.rabbitmq.username=guest
+spring.rabbitmq.password=guest
+
+# Batch Processing Configuration
+batch:
+  core-pool-size: 5
+  max-pool-size: 10
+  queue-capacity: 25
+  thread-name-prefix: BatchProcessor-
+  size: 100
+  timeout-seconds: 300
+  min-size: 10
+  max-size: 100
+  queue-depth-threshold: 1000
+  adjustment-step: 10
+
+# Validation Configuration
+xml:
+  validation:
+    entity-expansion-limit: 0
+    honour-all-schema-locations: true
+    enable-external-dtd: false
+    enable-external-schema: false
+    enable-schema-full-checking: false
+    max-memory-size: 10485760
 ```
 
 ### Frontend Configuration
@@ -261,6 +287,17 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Performance optimization
 - Testing coverage
 - Documentation updates
+- Two processing modes:
+  * Asynchronous (RabbitMQ)
+  * Synchronous (Direct upload)
+- Advanced features:
+  * Smart batching
+  * DLQ and retry mechanisms
+  * Schema version management
+  * Validation caching
+  * File storage and metadata
+  * Circuit breaker pattern
+  * Comprehensive monitoring
 
 ### In Progress
 - Additional document type support
