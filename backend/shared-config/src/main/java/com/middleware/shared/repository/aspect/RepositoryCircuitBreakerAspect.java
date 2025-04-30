@@ -58,7 +58,6 @@ public class RepositoryCircuitBreakerAspect {
         
         // Sanitize and log method information
         log.debug("Applying circuit breaker to repository method: {}.{}", className, methodName);
-        log.debug("Method arguments count: {}", joinPoint.getArgs().length);
         
         // Sanitize sensitive data in arguments
         Object[] sanitizedArgs = Arrays.stream(joinPoint.getArgs())
@@ -92,11 +91,14 @@ public class RepositoryCircuitBreakerAspect {
                 },
                 () -> {
                     log.warn("Circuit breaker fallback for method {}.{}", className, methodName);
-                    return getFallbackValue(method.getReturnType(), joinPoint.getArgs());
+                    Object fallbackValue = getFallbackValue(method.getReturnType(), joinPoint.getArgs());
+                    log.debug("Using fallback value: {}", fallbackValue);
+                    return fallbackValue;
                 }
             );
         } catch (Exception e) {
             log.error("Circuit breaker error in {}.{}: {}", className, methodName, e.getMessage());
+            // Preserve the original exception to maintain transaction rollback behavior
             throw e;
         }
     }
@@ -215,8 +217,13 @@ public class RepositoryCircuitBreakerAspect {
 
     /**
      * Get appropriate fallback value based on return type.
+     * This version ensures type safety and proper null handling.
      */
     private Object getFallbackValue(Class<?> returnType, Object[] args) {
+        if (returnType == null) {
+            return null;
+        }
+        
         if (Page.class.isAssignableFrom(returnType)) {
             // Find Pageable argument if exists
             Pageable pageable = null;
@@ -238,7 +245,20 @@ public class RepositoryCircuitBreakerAspect {
             if (returnType == double.class) return 0.0;
             if (returnType == float.class) return 0.0f;
             return null;
+        } else if (returnType == String.class) {
+            return "";
+        } else if (returnType == Boolean.class) {
+            return Boolean.FALSE;
+        } else if (returnType == Long.class) {
+            return 0L;
+        } else if (returnType == Integer.class) {
+            return 0;
+        } else if (returnType == Double.class) {
+            return 0.0;
+        } else if (returnType == Float.class) {
+            return 0.0f;
         }
+        
         return null;
     }
 

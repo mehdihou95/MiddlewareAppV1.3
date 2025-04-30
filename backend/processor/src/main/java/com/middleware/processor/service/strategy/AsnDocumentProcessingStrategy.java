@@ -22,6 +22,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import com.middleware.shared.service.util.CircuitBreakerService;
 import com.middleware.shared.repository.ClientRepository;
+import com.middleware.shared.model.TargetLevel;
 
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotNull;
@@ -38,6 +39,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.Collections;
+import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Concrete strategy for processing ASN (Advanced Shipping Notice) documents.
@@ -65,6 +69,9 @@ public class AsnDocumentProcessingStrategy extends BaseDocumentProcessingTemplat
     @Autowired
     private XmlValidationService xmlValidationService;
 
+    @Autowired
+    private ClientRepository clientRepository;
+
     @Override
     public boolean canHandle(String rootElement) {
         return ASN_ROOT_ELEMENT.equals(rootElement);
@@ -76,7 +83,7 @@ public class AsnDocumentProcessingStrategy extends BaseDocumentProcessingTemplat
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     protected Object processSpecificDocument(Document document, Interface interfaceEntity) throws Exception {
         log.debug("Processing ASN document for interface: {}", interfaceEntity.getName());
         
@@ -90,20 +97,22 @@ public class AsnDocumentProcessingStrategy extends BaseDocumentProcessingTemplat
                 // Save header with circuit breaker protection
                 asnHeader = asnService.createAsnHeader(asnHeader);
                 
-                // Process ASN lines
-                List<AsnLine> asnLines = createAsnLinesFromMappingRules(document, interfaceEntity, asnHeader);
-                if (!asnLines.isEmpty()) {
-                    // Save lines with circuit breaker protection
-                    asnLines = asnService.createAsnLines(asnLines);
+                if (asnHeader != null && asnHeader.getId() != null) {
+                    // Process ASN lines using the header ID
+                    List<AsnLine> asnLines = createAsnLinesFromMappingRules(document, interfaceEntity, asnHeader);
+                    if (!asnLines.isEmpty()) {
+                        // Save lines with circuit breaker protection
+                        asnLines = asnService.createAsnLines(asnLines);
+                    }
                     
-                    // Update header with lines
-                    asnHeader.setLines(new HashSet<>(asnLines));
-                    asnService.updateAsnHeader(asnHeader.getId(), asnHeader);
+                    log.info("Successfully processed ASN document for interface: {}", interfaceEntity.getName());
+                    return asnHeader;
+                } else {
+                    throw new ValidationException("Failed to create ASN Header - no ID generated");
                 }
             }
             
-            log.info("Successfully processed ASN document for interface: {}", interfaceEntity.getName());
-            return asnHeader;
+            throw new ValidationException("Failed to create ASN Header - header is null");
         } catch (Exception e) {
             log.error("Error processing ASN document for interface {}: {}", interfaceEntity.getName(), e.getMessage(), e);
             throw new ValidationException("Failed to process ASN document: " + e.getMessage());
@@ -116,7 +125,11 @@ public class AsnDocumentProcessingStrategy extends BaseDocumentProcessingTemplat
     }
 
     private AsnHeader createHeaderFromRules(Client client, List<MappingRule> headerRules) {
-        AsnHeader header = asnFactory.createDefaultHeader(client);
+        // Fetch a fresh Client instance to avoid session issues
+        Client freshClient = clientRepository.findById(client.getId())
+            .orElseThrow(() -> new ValidationException("Client not found with ID: " + client.getId()));
+            
+        AsnHeader header = asnFactory.createDefaultHeader(freshClient);
         
         // Apply default values from mapping rules
         if (headerRules != null) {
@@ -129,7 +142,7 @@ public class AsnDocumentProcessingStrategy extends BaseDocumentProcessingTemplat
                             getTargetFieldType(header, rule.getTargetField())
                         );
                         setEntityField(header, rule.getTargetField(), defaultValue);
-                } catch (Exception e) {
+                    } catch (Exception e) {
                         handleRuleProcessingError(rule, e);
                     }
                 }
@@ -145,38 +158,155 @@ public class AsnDocumentProcessingStrategy extends BaseDocumentProcessingTemplat
         }
 
         for (MappingRule rule : headerRules) {
-            try {
-                String rawValue = xmlProcessor.evaluateXPath(document, rule.getSourceField());
-                processFieldWithRule(header, rule, rawValue);
-            } catch (Exception e) {
-                handleRuleProcessingError(rule, e);
+            if (rule.getTargetLevel() == TargetLevel.HEADER) {  // Only process HEADER level rules
+                try {
+                    // Let XmlProcessor handle the XPath evaluation directly with the full path
+                    String rawValue = xmlProcessor.evaluateXPath(document, rule.getSourceField());
+                    processFieldWithRule(header, rule, rawValue);
+                    log.debug("Applied header rule {}: value = {}", rule.getName(), rawValue);
+                } catch (Exception e) {
+                    handleRuleProcessingError(rule, e);
+                }
             }
         }
     }
 
     private List<AsnLine> processAsnLines(Document document, List<MappingRule> lineRules, AsnHeader header) {
         List<AsnLine> lines = new ArrayList<>();
-        NodeList lineNodes = document.getElementsByTagName("ASN_LINE");
         
-        for (int i = 0; i < lineNodes.getLength(); i++) {
-            Element lineElement = (Element) lineNodes.item(i);
-            AsnLine line = createLineFromRules(header, header.getClient(), lineRules);
-            
-            // Apply mapping rules to line
-            for (MappingRule rule : lineRules) {
-                try {
-                    String rawValue = xmlProcessor.evaluateXPath(lineElement, rule.getSourceField());
-                    processFieldWithRule(line, rule, rawValue);
-                } catch (Exception e) {
-                    handleRuleProcessingError(rule, e);
-                }
+        try {
+            if (lineRules.isEmpty()) {
+                throw new ValidationException("No line mapping rules found");
             }
             
-            validateAsnLine(line, lineRules);
-            lines.add(line);
+            // Get all line-level rules
+            List<MappingRule> lineLevelRules = lineRules.stream()
+                .filter(rule -> rule.getTargetLevel() == TargetLevel.LINE)
+                .collect(Collectors.toList());
+                
+            // Get the first rule's path to find line nodes
+            String lineNodePath = lineLevelRules.get(0).getSourceField();
+            int lastSlashIndex = lineNodePath.lastIndexOf('/');
+            if (lastSlashIndex > 0) {
+                lineNodePath = lineNodePath.substring(0, lastSlashIndex);
+            }
+            log.debug("Using line node path: {}", lineNodePath);
+            
+            // Get all line nodes using XPath
+            NodeList lineNodes = xmlProcessor.evaluateXPathForNodes(document, lineNodePath);
+            log.debug("Found {} line nodes in document", lineNodes.getLength());
+            
+            for (int i = 0; i < lineNodes.getLength(); i++) {
+                Element lineElement = (Element) lineNodes.item(i);
+                AsnLine line = createLineFromRules(header, header.getClient(), lineRules);
+                
+                // Apply mapping rules to line
+                for (MappingRule rule : lineLevelRules) {
+                    try {
+                        // Get the field name from the rule's source field
+                        String fieldName = rule.getSourceField().substring(rule.getSourceField().lastIndexOf('/') + 1);
+                        String rawValue = xmlProcessor.evaluateXPath(lineElement, fieldName);
+                        processFieldWithRule(line, rule, rawValue);
+                        log.debug("Applied rule {} to line {}: value = {}", rule.getName(), i + 1, rawValue);
+                    } catch (Exception e) {
+                        handleRuleProcessingError(rule, e);
+                    }
+                }
+                
+                validateAsnLine(line, lineRules);
+                lines.add(line);
+                log.debug("Created ASN line {} with number {}", i + 1, line.getLineNumber());
+            }
+            
+            return lines;
+        } catch (Exception e) {
+            log.error("Error processing ASN lines: {}", e.getMessage(), e);
+            throw new ValidationException("Failed to process ASN lines: " + e.getMessage());
+        }
+    }
+
+    private String findLineNodePath(List<MappingRule> lineLevelRules) {
+        if (lineLevelRules.isEmpty()) {
+            throw new ValidationException("No line-level mapping rules found");
+        }
+
+        // Get all unique paths
+        List<String> paths = lineLevelRules.stream()
+            .map(MappingRule::getSourceField)
+            .distinct()
+            .collect(Collectors.toList());
+
+        // Split paths into segments and find the common path
+        List<List<String>> pathSegments = paths.stream()
+            .map(path -> Arrays.asList(path.split("/(?=\\*\\[local-name\\(\\)='[^']*'\\])")))
+            .collect(Collectors.toList());
+
+        // Find the common path up to the line node
+        List<String> commonPath = new ArrayList<>();
+        int minLength = pathSegments.stream().mapToInt(List::size).min().orElse(0);
+
+        // Find the line node level by looking at the paths
+        int lineNodeLevel = -1;
+        for (int i = 0; i < minLength; i++) {
+            final int level = i;
+            String segment = pathSegments.get(0).get(level);
+            if (pathSegments.stream().allMatch(segments -> segments.get(level).equals(segment))) {
+                // Check if this is the line node level (parent of the field nodes)
+                boolean isLineNode = pathSegments.stream()
+                    .map(segments -> segments.size() > level + 1 ? segments.get(level + 1) : "")
+                    .distinct()
+                    .count() > 1;
+                if (isLineNode) {
+                    lineNodeLevel = level;
+                    commonPath.add(segment);
+                    break;
+                }
+                commonPath.add(segment);
+            } else {
+                break;
+            }
+        }
+
+        if (lineNodeLevel == -1) {
+            throw new ValidationException("Could not determine line node level from mapping rules");
+        }
+
+        // Join the path segments with forward slashes and ensure proper XPath format
+        String xpath = String.join("/", commonPath);
+        if (!xpath.startsWith("/")) {
+            xpath = "/" + xpath;
+        }
+
+        log.debug("Generated XPath for line nodes: {}", xpath);
+        return xpath;
+    }
+
+    private String getRelativeFieldPath(String lineNodePath, String fullPath) {
+        // Extract the field-specific part of the XPath by finding the first different segment
+        String[] lineParts = lineNodePath.split("/");
+        String[] fullParts = fullPath.split("/");
+        
+        StringBuilder relativePath = new StringBuilder();
+        boolean foundDifference = false;
+        
+        for (int i = 0; i < fullParts.length; i++) {
+            if (i >= lineParts.length || !fullParts[i].equals(lineParts[i])) {
+                foundDifference = true;
+            }
+            if (foundDifference) {
+                if (relativePath.length() > 0) {
+                    relativePath.append("/");
+                }
+                relativePath.append(fullParts[i]);
+            }
         }
         
-        return lines;
+        String result = relativePath.toString();
+        if (result.startsWith("/")) {
+            result = result.substring(1);
+        }
+        
+        return result;
     }
 
     private AsnLine createLineFromRules(AsnHeader header, Client client, List<MappingRule> lineRules) {
@@ -218,42 +348,6 @@ public class AsnDocumentProcessingStrategy extends BaseDocumentProcessingTemplat
         }
     }
 
-    private String determineLineNodePath(List<MappingRule> lineRules, Interface interfaceEntity) {
-        // Try to get the common parent path from the rules
-        Optional<String> commonPath = findCommonXmlPath(lineRules);
-        if (commonPath.isPresent()) {
-            return commonPath.get();
-        }
-
-        // Use the first rule's source field as a fallback
-        return lineRules.stream()
-            .map(MappingRule::getSourceField)
-            .filter(Objects::nonNull)
-            .findFirst()
-            .orElseThrow(() -> new ValidationException("No valid line node path found in mapping rules"));
-    }
-
-    private Optional<String> findCommonXmlPath(List<MappingRule> rules) {
-        return rules.stream()
-            .map(MappingRule::getSourceField)
-            .filter(Objects::nonNull)
-            .findFirst()
-            .map(path -> {
-                // Extract the parent path by removing the last segment
-                int lastSlashIndex = path.lastIndexOf('/');
-                if (lastSlashIndex > 0) {
-                    String parentPath = path.substring(0, lastSlashIndex);
-                    // If the parent path ends with a predicate, remove it
-                    int predicateIndex = parentPath.indexOf('[');
-                    if (predicateIndex > 0) {
-                        parentPath = parentPath.substring(0, predicateIndex);
-                    }
-                    return parentPath;
-                }
-                return path;
-            });
-    }
-
     private Object getEntityField(Object entity, String fieldName) {
         try {
             // Convert database field name (snake_case) to Java field name (camelCase)
@@ -279,14 +373,14 @@ public class AsnDocumentProcessingStrategy extends BaseDocumentProcessingTemplat
             
             // If field is mapped (rule exists)
             if (rawValue != null && !rawValue.isEmpty()) {
-                // Use XML value
+                // Use TransformationService to handle both transformation and type conversion
                 Object transformedValue = transformationService.transformAndConvert(
                     rawValue,
                     rule.getTransformation(),
                     targetType
                 );
                 setEntityField(entity, rule.getTargetField(), transformedValue);
-                log.debug("Set {} to XML value: {}", rule.getTargetField(), transformedValue);
+                log.debug("Set {} to transformed value: {}", rule.getTargetField(), transformedValue);
             } else if (!isNullable) {
                 // For non-nullable fields, use factory default
                 // Factory default will already be set from createDefaultHeader/createDefaultLine
@@ -335,22 +429,22 @@ public class AsnDocumentProcessingStrategy extends BaseDocumentProcessingTemplat
         }
     }
 
-    private void validateRequiredMappings(Map<String, List<MappingRule>> rulesByTable) {
-        for (Map.Entry<String, List<MappingRule>> entry : rulesByTable.entrySet()) {
-            List<MappingRule> missingRequired = entry.getValue().stream()
-                .filter(MappingRule::getRequired)
-                .filter(rule -> rule.getSourceField() == null || rule.getSourceField().isEmpty())
-                .toList();
-            
-            if (!missingRequired.isEmpty()) {
-                String missingFields = missingRequired.stream()
-                    .map(MappingRule::getName)
-                    .collect(java.util.stream.Collectors.joining(", "));
-                throw new ValidationException(
-                    String.format("Missing required mappings for table %s: %s", 
-                        entry.getKey(), missingFields)
-                );
-            }
+    private void validateRequiredMappings(Document document, List<MappingRule> rules) {
+        List<String> missingRequiredFields = rules.stream()
+            .filter(MappingRule::getRequired)
+            .filter(rule -> {
+                try {
+                    String value = xmlProcessor.evaluateXPath(document, rule.getSourceField());
+                    return value == null || value.trim().isEmpty();
+                } catch (Exception e) {
+                    return true;
+                }
+            })
+            .map(MappingRule::getTargetField)
+            .collect(Collectors.toList());
+
+        if (!missingRequiredFields.isEmpty()) {
+            throw new ValidationException("Missing required fields: " + String.join(", ", missingRequiredFields));
         }
     }
 
@@ -385,25 +479,11 @@ public class AsnDocumentProcessingStrategy extends BaseDocumentProcessingTemplat
             java.lang.reflect.Field field = entity.getClass().getDeclaredField(javaFieldName.toString());
             field.setAccessible(true);
 
-            // Set the value with appropriate type conversion
-            if (value != null) {
-                Class<?> fieldType = field.getType();
-                Object convertedValue = value;
-                
-                if (fieldType == Integer.class || fieldType == int.class) {
-                    convertedValue = Integer.valueOf(value.toString());
-                } else if (fieldType == Long.class || fieldType == long.class) {
-                    convertedValue = Long.valueOf(value.toString());
-                } else if (fieldType == Double.class || fieldType == double.class) {
-                    convertedValue = Double.valueOf(value.toString());
-                } else if (fieldType == Boolean.class || fieldType == boolean.class) {
-                    convertedValue = Boolean.valueOf(value.toString());
-                }
-                
-                field.set(entity, convertedValue);
-            }
+            // Set the value directly as it's already converted by TransformationService
+            field.set(entity, value);
         } catch (Exception e) {
             log.warn("Failed to set field {} to value {}: {}", fieldName, value, e.getMessage());
+            throw new ValidationException("Failed to set field " + fieldName + ": " + e.getMessage());
         }
     }
 
@@ -417,77 +497,52 @@ public class AsnDocumentProcessingStrategy extends BaseDocumentProcessingTemplat
         return 10;
     }
 
-    private List<MappingRule> getHeaderMappingRules(Interface interfaceEntity) {
-        List<MappingRule> allRules = getActiveMappingRules(interfaceEntity.getId());
-        if (allRules.isEmpty()) {
-            throw new ValidationException("No active mapping rules found for interface: " + interfaceEntity.getName());
-        }
-        
-        List<MappingRule> headerRules = allRules.stream()
-            .filter(rule -> "ASN_HEADERS".equals(rule.getTableName()))
-            .collect(Collectors.toList());
-            
-        if (headerRules.isEmpty()) {
-            throw new ValidationException("No header mapping rules found for interface: " + interfaceEntity.getName());
-        }
-        
-        return headerRules;
-    }
-    
-    private List<MappingRule> getLineMappingRules(Interface interfaceEntity) {
-        List<MappingRule> allRules = getActiveMappingRules(interfaceEntity.getId());
-        return allRules.stream()
-            .filter(rule -> "ASN_LINES".equals(rule.getTableName()))
+    private List<MappingRule> getHeaderMappingRules(Long interfaceId) {
+        return getActiveMappingRules(interfaceId).stream()
+            .filter(this::isHeaderRule)
             .collect(Collectors.toList());
     }
 
-    private void validateAsnHeader(AsnHeader header, List<MappingRule> headerRules) throws ValidationException {
-        // Check required fields based on mapping rules
-        for (MappingRule rule : headerRules) {
-            if (rule.getRequired()) {
-                String fieldName = rule.getTargetField();
-                try {
-                    Object value = getEntityField(header, fieldName);
-                    if (value == null || (value instanceof String && ((String) value).trim().isEmpty())) {
-                        throw new ValidationException("Required header field is missing or empty: " + fieldName);
-                    }
-                } catch (Exception e) {
-                    throw new ValidationException("Failed to validate required header field: " + fieldName);
-                }
-            }
-        }
-        
-        // Validate business rules
-        if (header.getClient() == null) {
-            throw new ValidationException("ASN header must have a client");
-        }
-        
-        if (header.getAsnNumber() == null || header.getAsnNumber().trim().isEmpty()) {
-            throw new ValidationException("ASN number is required");
-        }
+    private List<MappingRule> getLineMappingRules(Long interfaceId) {
+        return getActiveMappingRules(interfaceId).stream()
+            .filter(this::isLineRule)
+            .collect(Collectors.toList());
+    }
+
+    private boolean isHeaderRule(MappingRule rule) {
+        return rule.getTargetLevel() == TargetLevel.HEADER;
+    }
+
+    private boolean isLineRule(MappingRule rule) {
+        return rule.getTargetLevel() == TargetLevel.LINE;
     }
 
     private AsnHeader createAsnHeaderFromMappingRules(Document document, Interface interfaceEntity) {
-        List<MappingRule> headerRules = getHeaderMappingRules(interfaceEntity);
+        List<MappingRule> headerRules = getHeaderMappingRules(interfaceEntity.getId());
         if (headerRules.isEmpty()) {
             throw new ValidationException("No header mapping rules found for interface: " + interfaceEntity.getName());
         }
         
         AsnHeader header = createHeaderFromRules(interfaceEntity.getClient(), headerRules);
         applyHeaderMappingRules(document, header, headerRules);
-        validateAsnHeader(header, headerRules);
+        validateRequiredMappings(document, headerRules);
         return header;
     }
 
     private List<AsnLine> createAsnLinesFromMappingRules(Document document, Interface interfaceEntity, AsnHeader header) {
-        List<MappingRule> lineRules = getLineMappingRules(interfaceEntity);
+        List<MappingRule> lineRules = getLineMappingRules(interfaceEntity.getId());
         if (lineRules.isEmpty()) {
+            log.warn("No line mapping rules found for interface: {}", interfaceEntity.getName());
             return Collections.emptyList();
         }
         
         List<AsnLine> lines = processAsnLines(document, lineRules, header);
-        lines.forEach(line -> validateAsnLine(line, lineRules));
-        return lines;
+        if (!lines.isEmpty()) {
+            log.info("Created {} ASN lines", lines.size());
+            return asnService.createAsnLines(lines);
+        }
+        
+        return Collections.emptyList();
     }
 }
 

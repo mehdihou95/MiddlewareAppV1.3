@@ -80,6 +80,10 @@ public class MappingRule extends BaseEntity {
     @Column
     private String transformationRule; // Kept for potential future use or specific scenarios
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_level")
+    private TargetLevel targetLevel; // HEADER or LINE
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id")
     @JsonIdentityReference(alwaysAsId = true)
@@ -339,6 +343,14 @@ public class MappingRule extends BaseEntity {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public TargetLevel getTargetLevel() {
+        return targetLevel;
+    }
+
+    public void setTargetLevel(TargetLevel targetLevel) {
+        this.targetLevel = targetLevel;
     }
 }
 

@@ -3,7 +3,8 @@ package com.middleware.processor.service.impl;
 import com.middleware.processor.exception.ValidationException;
 import com.middleware.processor.service.interfaces.DocumentProcessingStrategyService;
 import com.middleware.processor.service.interfaces.XmlProcessorService;
-import com.middleware.processor.service.util.XmlProcessor;
+import com.middleware.processor.service.strategy.BaseDocumentProcessingStrategy;
+import com.middleware.processor.service.strategy.DocumentProcessingStrategyFactory;
 import com.middleware.shared.model.Interface;
 import com.middleware.shared.model.ProcessedFile;
 import com.middleware.shared.repository.InterfaceRepository;
@@ -16,15 +17,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.web.multipart.MultipartFile;
-import org.w3c.dom.Document;
+import org.springframework.mock.web.MockMultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Implementation of XmlProcessorService.
@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class XmlProcessorServiceImpl implements XmlProcessorService {
 
-    private static final Logger log = LoggerFactory.getLogger(XmlProcessorServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(XmlProcessorServiceImpl.class);
     private static final int ASYNC_TIMEOUT_MINUTES = 5;
 
     @Autowired
@@ -43,170 +43,201 @@ public class XmlProcessorServiceImpl implements XmlProcessorService {
     private CircuitBreakerService circuitBreakerService;
 
     @Autowired
-    private XmlProcessor xmlProcessor;
-
-    @Autowired
     private InterfaceRepository interfaceRepository;
 
     @Autowired
     private ProcessedFileRepository processedFileRepository;
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED)
-    public ProcessedFile processXmlFile(MultipartFile file, Interface interfaceEntity) throws ValidationException {
-        log.debug("Processing XML file {} for interface {}", file.getOriginalFilename(), interfaceEntity.getName());
-        
-        return circuitBreakerService.executeRepositoryOperation(
-            () -> {
-                try {
-                    // Parse XML file
-                    Document document = xmlProcessor.parseXmlFile(file);
-                    
-                    // Extract root element
-                    String rootElement = xmlProcessor.extractRootElement(file);
-                    log.debug("Extracted root element: {}", rootElement);
-                    
-                    // Create MultipartFile from document for strategy processing
-                    MultipartFile processableFile = xmlProcessor.createMultipartFile(
-                        xmlProcessor.serializeDocument(document),
-                        file.getOriginalFilename()
-                    );
-                    
-                    // Process document using appropriate strategy
-                    return documentProcessingStrategyService.processDocument(processableFile, interfaceEntity);
-                } catch (Exception e) {
-                    log.error("Error processing XML file {}: {}", file.getOriginalFilename(), e.getMessage(), e);
-                    ProcessedFile errorFile = new ProcessedFile();
-                    errorFile.setFileName(file.getOriginalFilename());
-                    errorFile.setStatus("ERROR");
-                    errorFile.setErrorMessage(e.getMessage());
-                    errorFile.setProcessedAt(LocalDateTime.now());
-                    errorFile.setInterfaceEntity(interfaceEntity);
-                    errorFile.setClient(interfaceEntity.getClient());
-                    return processedFileRepository.save(errorFile);
+    public ProcessedFile processXmlFile(MultipartFile file, Interface interfaceEntity) {
+        logger.info("Processing XML file: {} for interface: {}", file.getOriginalFilename(), interfaceEntity.getName());
+
+        Supplier<ProcessedFile> mainOperation = () -> {
+            try {
+                BaseDocumentProcessingStrategy strategy = documentProcessingStrategyService.getStrategy(interfaceEntity.getType());
+                if (strategy == null) {
+                    throw new ValidationException("No processing strategy found for interface type: " + interfaceEntity.getType());
                 }
-            },
-            () -> {
-                log.warn("Circuit breaker fallback: Creating error processed file for {}", file.getOriginalFilename());
-                ProcessedFile errorFile = new ProcessedFile();
-                errorFile.setFileName(file.getOriginalFilename());
-                errorFile.setStatus("ERROR");
-                errorFile.setErrorMessage("Service unavailable: Circuit breaker open");
-                errorFile.setProcessedAt(LocalDateTime.now());
-                errorFile.setInterfaceEntity(interfaceEntity);
-                errorFile.setClient(interfaceEntity.getClient());
-                return errorFile;
+                return strategy.processDocument(file, interfaceEntity);
+            } catch (Exception e) {
+                logger.error("Error processing file {}: {}", file.getOriginalFilename(), e.getMessage(), e);
+                throw new RuntimeException("Failed to process file: " + e.getMessage(), e);
             }
-        );
+        };
+
+        Supplier<ProcessedFile> fallback = () -> {
+            logger.error("Circuit breaker is open for file processing: {}", file.getOriginalFilename());
+            ProcessedFile errorFile = new ProcessedFile();
+            errorFile.setFileName(file.getOriginalFilename());
+            errorFile.setStatus("ERROR");
+            errorFile.setErrorMessage("Service temporarily unavailable due to high load");
+            errorFile.setInterfaceEntity(interfaceEntity);
+            return errorFile;
+        };
+
+        return circuitBreakerService.executeRepositoryOperation(mainOperation, fallback);
     }
 
     @Override
-    @Transactional
-    public ProcessedFile processXmlFile(MultipartFile file) throws ValidationException {
-        log.debug("Processing XML file {} with auto-detected interface", file.getOriginalFilename());
-        
-        return circuitBreakerService.executeRepositoryOperation(
-            () -> {
-                try {
-                    // Auto-detect interface based on XML content
-                    String rootElement = xmlProcessor.extractRootElement(file);
-                    Interface detectedInterface = interfaceRepository.findByRootElementAndIsActiveTrue(rootElement)
-                        .orElseThrow(() -> new ValidationException("No matching interface found for XML content"));
-                    
-                    return processXmlFile(file, detectedInterface);
-                } catch (Exception e) {
-                    log.error("Error processing XML file {}: {}", file.getOriginalFilename(), e.getMessage(), e);
-                    throw new ValidationException("Failed to process XML file: " + e.getMessage(), e);
-                }
-            },
-            () -> {
-                log.warn("Circuit breaker fallback: Creating error processed file for {}", file.getOriginalFilename());
-                ProcessedFile errorFile = new ProcessedFile();
-                errorFile.setFileName(file.getOriginalFilename());
-                errorFile.setStatus("ERROR");
-                errorFile.setErrorMessage("Service unavailable: Circuit breaker open");
-                errorFile.setProcessedAt(LocalDateTime.now());
-                return errorFile;
-            }
-        );
-    }
+    public ProcessedFile processXmlFile(MultipartFile file) {
+        logger.info("Processing XML file: {}", file.getOriginalFilename());
 
-    @Override
-    @Transactional
-    public void reprocessFile(Long fileId) throws ValidationException {
-        log.debug("Reprocessing file with id: {}", fileId);
-        
-        circuitBreakerService.executeVoidRepositoryOperation(
-            () -> {
-                try {
-                    ProcessedFile existingFile = processedFileRepository.findById(fileId)
-                        .orElseThrow(() -> new ValidationException("Processed file not found with id: " + fileId));
-                    
-                    // Convert content to MultipartFile
-                    MultipartFile contentFile = xmlProcessor.createMultipartFile(
-                        existingFile.getContent(), 
-                        existingFile.getFileName()
-                    );
-                    
-                    ProcessedFile result = processXmlFile(contentFile, existingFile.getInterfaceEntity());
-                    existingFile.setStatus(result.getStatus());
-                    existingFile.setErrorMessage(result.getErrorMessage());
-                    existingFile.setProcessedAt(LocalDateTime.now());
-                    processedFileRepository.save(existingFile);
-                } catch (Exception e) {
-                    log.error("Error reprocessing file {}: {}", fileId, e.getMessage(), e);
-                    throw new ValidationException("Failed to reprocess file: " + e.getMessage(), e);
+        Supplier<ProcessedFile> mainOperation = () -> {
+            try {
+                BaseDocumentProcessingStrategy strategy = documentProcessingStrategyService.getStrategy(file.getOriginalFilename());
+                if (strategy == null) {
+                    throw new ValidationException("No processing strategy found for file: " + file.getOriginalFilename());
                 }
-            },
-            () -> {
-                log.warn("Circuit breaker fallback: Unable to reprocess file {}", fileId);
-                throw new ValidationException("Service unavailable: Circuit breaker open");
+                // Create a default interface for the file
+                Interface defaultInterface = new Interface();
+                defaultInterface.setType("DEFAULT");
+                return strategy.processDocument(file, defaultInterface);
+            } catch (Exception e) {
+                logger.error("Error processing file {}: {}", file.getOriginalFilename(), e.getMessage(), e);
+                throw new RuntimeException("Failed to process file: " + e.getMessage(), e);
             }
-        );
+        };
+
+        Supplier<ProcessedFile> fallback = () -> {
+            logger.error("Circuit breaker is open for file processing: {}", file.getOriginalFilename());
+            ProcessedFile errorFile = new ProcessedFile();
+            errorFile.setFileName(file.getOriginalFilename());
+            errorFile.setStatus("ERROR");
+            errorFile.setErrorMessage("Service temporarily unavailable due to high load");
+            return errorFile;
+        };
+
+        return circuitBreakerService.executeRepositoryOperation(mainOperation, fallback);
     }
 
     @Override
     public CompletableFuture<ProcessedFile> processXmlFileAsync(MultipartFile file, Long interfaceId) {
-        log.debug("Processing XML file asynchronously: {} for interface {}", file.getOriginalFilename(), interfaceId);
-        
+        logger.info("Processing XML file asynchronously: {} for interface: {}", file.getOriginalFilename(), interfaceId);
+
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Interface interfaceEntity = interfaceRepository.findById(interfaceId)
-                    .orElseThrow(() -> new ValidationException("Interface not found with id: " + interfaceId));
+                    .orElseThrow(() -> new ValidationException("Interface not found with ID: " + interfaceId));
                 return processXmlFile(file, interfaceEntity);
             } catch (Exception e) {
-                log.error("Async processing failed: {}", e.getMessage(), e);
+                logger.error("Async processing failed: {}", e.getMessage(), e);
                 ProcessedFile errorFile = new ProcessedFile();
                 errorFile.setFileName(file.getOriginalFilename());
                 errorFile.setStatus("ERROR");
-                errorFile.setErrorMessage("Async processing failed: " + e.getMessage());
-                errorFile.setProcessedAt(LocalDateTime.now());
+                errorFile.setErrorMessage("Failed to process file asynchronously: " + e.getMessage());
                 return errorFile;
             }
-        }).orTimeout(ASYNC_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+        }).completeOnTimeout(null, ASYNC_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+    }
+
+    @Override
+    public void reprocessFile(Long fileId) {
+        logger.info("Reprocessing file with ID: {}", fileId);
+
+        CircuitBreakerService.VoidOperation mainOperation = () -> {
+            try {
+                ProcessedFile file = processedFileRepository.findById(fileId)
+                    .orElseThrow(() -> new ValidationException("File not found with ID: " + fileId));
+
+                BaseDocumentProcessingStrategy strategy = documentProcessingStrategyService.getStrategy(file.getInterfaceEntity().getType());
+                if (strategy == null) {
+                    throw new ValidationException("No processing strategy found for interface type: " + file.getInterfaceEntity().getType());
+                }
+
+                // Create a MultipartFile from the content
+                MultipartFile multipartFile = new MockMultipartFile(
+                    file.getFileName(),
+                    file.getFileName(),
+                    "text/xml",
+                    file.getContent().getBytes()
+                );
+
+                ProcessedFile reprocessedFile = strategy.processDocument(multipartFile, file.getInterfaceEntity());
+                file.setStatus(reprocessedFile.getStatus());
+                file.setErrorMessage(reprocessedFile.getErrorMessage());
+                processedFileRepository.save(file);
+            } catch (Exception e) {
+                logger.error("Error reprocessing file {}: {}", fileId, e.getMessage(), e);
+                throw new RuntimeException("Failed to reprocess file: " + e.getMessage(), e);
+            }
+        };
+
+        CircuitBreakerService.VoidOperation fallback = () -> {
+            logger.error("Circuit breaker is open for file reprocessing: {}", fileId);
+            try {
+                ProcessedFile file = processedFileRepository.findById(fileId)
+                    .orElseThrow(() -> new ValidationException("File not found with ID: " + fileId));
+                file.setStatus("ERROR");
+                file.setErrorMessage("Service temporarily unavailable due to high load");
+                processedFileRepository.save(file);
+            } catch (Exception e) {
+                logger.error("Error updating file status: {}", e.getMessage(), e);
+            }
+        };
+
+        circuitBreakerService.executeVoidRepositoryOperation(mainOperation, fallback);
+    }
+
+    @Override
+    public boolean validateXmlFile(MultipartFile file, Interface interfaceEntity) {
+        logger.info("Validating XML file: {} for interface: {}", file.getOriginalFilename(), interfaceEntity.getName());
+
+        Supplier<Boolean> mainOperation = () -> {
+            try {
+                BaseDocumentProcessingStrategy strategy = documentProcessingStrategyService.getStrategy(interfaceEntity.getType());
+                if (strategy == null) {
+                    throw new ValidationException("No processing strategy found for interface type: " + interfaceEntity.getType());
+                }
+                ProcessedFile result = strategy.processDocument(file, interfaceEntity);
+                return "SUCCESS".equals(result.getStatus());
+            } catch (Exception e) {
+                logger.error("Error validating XML file {}: {}", file.getOriginalFilename(), e.getMessage(), e);
+                throw new RuntimeException("Failed to validate XML file: " + e.getMessage(), e);
+            }
+        };
+
+        Supplier<Boolean> fallback = () -> {
+            logger.warn("Circuit breaker fallback: Validation failed for file {}", file.getOriginalFilename());
+            return false;
+        };
+
+        return circuitBreakerService.executeRepositoryOperation(mainOperation, fallback);
+    }
+
+    @Override
+    public String transformXmlFile(MultipartFile file, Interface interfaceEntity) {
+        logger.info("Transforming XML file: {} for interface: {}", file.getOriginalFilename(), interfaceEntity.getName());
+
+        Supplier<String> mainOperation = () -> {
+            try {
+                BaseDocumentProcessingStrategy strategy = documentProcessingStrategyService.getStrategy(interfaceEntity.getType());
+                if (strategy == null) {
+                    throw new ValidationException("No processing strategy found for interface type: " + interfaceEntity.getType());
+                }
+                ProcessedFile result = strategy.processDocument(file, interfaceEntity);
+                return result.getContent();
+            } catch (Exception e) {
+                logger.error("Error transforming XML file {}: {}", file.getOriginalFilename(), e.getMessage(), e);
+                throw new RuntimeException("Failed to transform XML file: " + e.getMessage(), e);
+            }
+        };
+
+        Supplier<String> fallback = () -> {
+            logger.warn("Circuit breaker fallback: Transformation failed for file {}", file.getOriginalFilename());
+            throw new RuntimeException("Service temporarily unavailable due to high load");
+        };
+
+        return circuitBreakerService.executeRepositoryOperation(mainOperation, fallback);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ProcessedFile> getProcessedFiles() {
-        log.debug("Retrieving all successfully processed files");
+        logger.info("Retrieving all successfully processed files");
         return circuitBreakerService.executeRepositoryOperation(
             () -> processedFileRepository.findByStatus("SUCCESS"),
             () -> {
-                log.warn("Circuit breaker fallback: Returning empty list for getProcessedFiles");
-                return new ArrayList<>();
-            }
-        );
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProcessedFile> getErrorFiles() {
-        log.debug("Retrieving all error files");
-        return circuitBreakerService.executeRepositoryOperation(
-            () -> processedFileRepository.findByStatus("ERROR"),
-            () -> {
-                log.warn("Circuit breaker fallback: Returning empty list for getErrorFiles");
+                logger.warn("Circuit breaker fallback: Returning empty list for getProcessedFiles");
                 return new ArrayList<>();
             }
         );
@@ -215,11 +246,11 @@ public class XmlProcessorServiceImpl implements XmlProcessorService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProcessedFile> getProcessedFiles(Pageable pageable) {
-        log.debug("Retrieving processed files with pagination: {}", pageable);
+        logger.info("Retrieving processed files with pagination: {}", pageable);
         return circuitBreakerService.executeRepositoryOperation(
             () -> processedFileRepository.findByStatus("SUCCESS", pageable),
             () -> {
-                log.warn("Circuit breaker fallback: Returning empty page for getProcessedFiles");
+                logger.warn("Circuit breaker fallback: Returning empty page for getProcessedFiles");
                 return Page.empty(pageable);
             }
         );
@@ -227,86 +258,26 @@ public class XmlProcessorServiceImpl implements XmlProcessorService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<ProcessedFile> getErrorFiles() {
+        logger.info("Retrieving all error files");
+        return circuitBreakerService.executeRepositoryOperation(
+            () -> processedFileRepository.findByStatus("ERROR"),
+            () -> {
+                logger.warn("Circuit breaker fallback: Returning empty list for getErrorFiles");
+                return new ArrayList<>();
+            }
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<ProcessedFile> getErrorFiles(Pageable pageable) {
-        log.debug("Retrieving error files with pagination: {}", pageable);
+        logger.info("Retrieving error files with pagination: {}", pageable);
         return circuitBreakerService.executeRepositoryOperation(
             () -> processedFileRepository.findByStatus("ERROR", pageable),
             () -> {
-                log.warn("Circuit breaker fallback: Returning empty page for getErrorFiles");
+                logger.warn("Circuit breaker fallback: Returning empty page for getErrorFiles");
                 return Page.empty(pageable);
-            }
-        );
-    }
-
-    @Override
-    public boolean validateXmlFile(MultipartFile file, Interface interfaceEntity) throws ValidationException {
-        log.debug("Validating XML file {} for interface {}", file.getOriginalFilename(), interfaceEntity.getName());
-        
-        return circuitBreakerService.executeRepositoryOperation(
-            () -> {
-                try {
-                    // Parse XML file
-                    Document document = xmlProcessor.parseXmlFile(file);
-                    
-                    // Extract root element and verify it matches interface
-                    String rootElement = xmlProcessor.extractRootElement(file);
-                    if (!rootElement.equals(interfaceEntity.getRootElement())) {
-                        throw new ValidationException("Root element does not match interface: expected " + 
-                            interfaceEntity.getRootElement() + " but found " + rootElement);
-                    }
-                    
-                    // Create MultipartFile from document for validation
-                    MultipartFile processableFile = xmlProcessor.createMultipartFile(
-                        xmlProcessor.serializeDocument(document),
-                        file.getOriginalFilename()
-                    );
-                    
-                    // Process document to validate
-                    ProcessedFile result = documentProcessingStrategyService.processDocument(processableFile, interfaceEntity);
-                    return "SUCCESS".equals(result.getStatus());
-                } catch (Exception e) {
-                    log.error("Error validating XML file {}: {}", file.getOriginalFilename(), e.getMessage(), e);
-                    throw new ValidationException("Failed to validate XML file: " + e.getMessage(), e);
-                }
-            },
-            () -> {
-                log.warn("Circuit breaker fallback: Validation failed for file {}", file.getOriginalFilename());
-                return false;
-            }
-        );
-    }
-
-    @Override
-    public String transformXmlFile(MultipartFile file, Interface interfaceEntity) throws ValidationException {
-        log.debug("Transforming XML file {} for interface {}", file.getOriginalFilename(), interfaceEntity.getName());
-        
-        return circuitBreakerService.executeRepositoryOperation(
-            () -> {
-                try {
-                    // Parse XML file
-                    Document document = xmlProcessor.parseXmlFile(file);
-                    
-                    // Create MultipartFile from document for transformation
-                    MultipartFile processableFile = xmlProcessor.createMultipartFile(
-                        xmlProcessor.serializeDocument(document),
-                        file.getOriginalFilename()
-                    );
-                    
-                    // Process document to transform
-                    ProcessedFile result = documentProcessingStrategyService.processDocument(processableFile, interfaceEntity);
-                    if (!"SUCCESS".equals(result.getStatus())) {
-                        throw new ValidationException("Failed to transform XML file: " + result.getErrorMessage());
-                    }
-                    
-                    return result.getContent();
-                } catch (Exception e) {
-                    log.error("Error transforming XML file {}: {}", file.getOriginalFilename(), e.getMessage(), e);
-                    throw new ValidationException("Failed to transform XML file: " + e.getMessage(), e);
-                }
-            },
-            () -> {
-                log.warn("Circuit breaker fallback: Transformation failed for file {}", file.getOriginalFilename());
-                throw new ValidationException("Service unavailable: Circuit breaker open");
             }
         );
     }

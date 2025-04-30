@@ -73,7 +73,8 @@ const TransformPage: React.FC = () => {
     transformationRule: '',
     isActive: true,
     sourceField: '',
-    targetField: ''
+    targetField: '',
+    targetLevel: 'HEADER'
   });
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
@@ -199,8 +200,9 @@ const TransformPage: React.FC = () => {
         priority: 0,
         transformationRule: '',
         isActive: true,
-        sourceField: selectedXsdElement.name, // Support for new field names
-        targetField: fieldName // Support for new field names
+        sourceField: selectedXsdElement.name,
+        targetField: fieldName,
+        targetLevel: tableName === 'ASN_HEADERS' ? 'HEADER' : 'LINE'
       });
       setOpenDialog(true);
     }
@@ -623,6 +625,19 @@ const TransformPage: React.FC = () => {
                 }
                 label="Active"
               />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel>Target Level</InputLabel>
+                <Select
+                  value={newMapping.targetLevel || 'HEADER'}
+                  onChange={(e) => setNewMapping({...newMapping, targetLevel: e.target.value as 'HEADER' | 'LINE'})}
+                  label="Target Level"
+                >
+                  <MenuItem value="HEADER">Header</MenuItem>
+                  <MenuItem value="LINE">Line</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
           </Grid>
         </DialogContent>

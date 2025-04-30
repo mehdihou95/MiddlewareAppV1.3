@@ -3,6 +3,7 @@ package com.middleware.processor.service.impl;
 import com.middleware.shared.config.ClientContextHolder;
 import com.middleware.shared.model.Interface;
 import com.middleware.shared.model.MappingRule;
+import com.middleware.shared.model.TargetLevel;
 import com.middleware.shared.repository.InterfaceRepository;
 import com.middleware.shared.repository.MappingRuleRepository;
 import com.middleware.processor.service.interfaces.MappingRuleService;
@@ -458,6 +459,52 @@ public class MappingRuleServiceImpl implements MappingRuleService {
             () -> {
                 log.warn("Circuit breaker fallback: Returning empty page for findByClientIdAndInterfaceIdAndTableName");
                 return Page.empty(pageable);
+            }
+        );
+    }
+
+    @Override
+    @Transactional
+    public void updateTargetLevels() {
+        log.debug("Updating target levels for all mapping rules");
+        
+        circuitBreakerService.executeRepositoryOperation(
+            () -> {
+                try {
+                    // Get all active mapping rules
+                    List<MappingRule> rules = mappingRuleRepository.findByIsActive(true, Pageable.unpaged()).getContent();
+                    log.info("Found {} active mapping rules to update", rules.size());
+                    
+                    int updatedCount = 0;
+                    for (MappingRule rule : rules) {
+                        if (rule.getTableName() != null) {
+                            TargetLevel targetLevel = null;
+                            if (rule.getTableName().equals("ASN_HEADERS")) {
+                                targetLevel = TargetLevel.HEADER;
+                            } else if (rule.getTableName().equals("ASN_LINES")) {
+                                targetLevel = TargetLevel.LINE;
+                            }
+                            
+                            if (targetLevel != null && !targetLevel.equals(rule.getTargetLevel())) {
+                                log.debug("Updating target level for rule {} from {} to {}", 
+                                    rule.getName(), rule.getTargetLevel(), targetLevel);
+                                rule.setTargetLevel(targetLevel);
+                                mappingRuleRepository.save(rule);
+                                updatedCount++;
+                            }
+                        }
+                    }
+                    
+                    log.info("Updated target levels for {} mapping rules", updatedCount);
+                    return null;
+                } catch (Exception e) {
+                    log.error("Error updating target levels: {}", e.getMessage(), e);
+                    throw e;
+                }
+            },
+            () -> {
+                log.warn("Circuit breaker fallback: Skipping target level update");
+                return null;
             }
         );
     }

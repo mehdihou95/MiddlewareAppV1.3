@@ -72,6 +72,7 @@ public class CircuitBreakerService {
     
     /**
      * Execute a repository operation with circuit breaker protection.
+     * This version ensures proper transaction handling and fallback behavior.
      *
      * @param operation The operation to execute
      * @param fallback The fallback operation if the circuit breaker is open
@@ -84,12 +85,22 @@ public class CircuitBreakerService {
             return CircuitBreaker.decorateSupplier(circuitBreaker, operation).get();
         } catch (Exception e) {
             log.warn("Circuit breaker fallback triggered: {}", e.getMessage());
-            return fallback.get();
+            try {
+                T fallbackResult = fallback.get();
+                log.debug("Fallback operation completed successfully");
+                return fallbackResult;
+            } catch (Exception fallbackError) {
+                log.error("Fallback operation failed: {}", fallbackError.getMessage());
+                // If fallback fails, we should throw the original exception
+                // to ensure proper transaction rollback
+                throw e;
+            }
         }
     }
     
     /**
      * Execute a void repository operation with circuit breaker protection.
+     * This version ensures proper transaction handling and fallback behavior.
      *
      * @param operation The operation to execute
      * @param fallback The fallback operation if the circuit breaker is open
@@ -107,9 +118,12 @@ public class CircuitBreakerService {
             log.warn("Circuit breaker fallback triggered: {}", e.getMessage());
             try {
                 fallback.execute();
+                log.debug("Fallback operation completed successfully");
             } catch (Exception fallbackError) {
                 log.error("Fallback operation failed: {}", fallbackError.getMessage());
-                throw new RuntimeException(fallbackError);
+                // If fallback fails, we should throw the original exception
+                // to ensure proper transaction rollback
+                throw e;
             }
         }
     }

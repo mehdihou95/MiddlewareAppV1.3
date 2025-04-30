@@ -9,6 +9,7 @@ import com.middleware.shared.model.MappingRule;
 import com.middleware.shared.model.ProcessedFile;
 import com.middleware.shared.repository.MappingRuleRepository;
 import com.middleware.shared.repository.ProcessedFileRepository;
+import com.middleware.shared.service.util.CircuitBreakerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ import java.util.List;
 /**
  * Abstract template for document processing strategies.
  * Provides common functionality for validation, transformation, and persistence.
- * Standardized transaction management with REQUIRES_NEW propagation.
+ * Standardized transaction management with REQUIRED propagation.
  */
 public abstract class BaseDocumentProcessingTemplate extends BaseDocumentProcessingStrategy {
 
@@ -44,6 +45,9 @@ public abstract class BaseDocumentProcessingTemplate extends BaseDocumentProcess
     @Autowired
     protected XmlProcessor xmlProcessor;
 
+    @Autowired
+    protected CircuitBreakerService circuitBreakerService;
+
     /**
      * Main processing method that orchestrates the document processing flow.
      * Runs in a new transaction to ensure atomicity for each document.
@@ -52,7 +56,7 @@ public abstract class BaseDocumentProcessingTemplate extends BaseDocumentProcess
      * @param interfaceEntity The interface configuration for this document.
      * @return The ProcessedFile entity representing the result.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public ProcessedFile processDocument(MultipartFile file, Interface interfaceEntity) {
         log.debug("Processing document {} for interface {}", file.getOriginalFilename(), interfaceEntity.getName());
 
@@ -62,9 +66,11 @@ public abstract class BaseDocumentProcessingTemplate extends BaseDocumentProcess
         processedFile.setInterfaceEntity(interfaceEntity);
         processedFile.setClient(interfaceEntity.getClient());
         processedFile.setProcessedAt(LocalDateTime.now());
-        processedFile = processedFileRepository.save(processedFile);
-
+        
         try {
+            // Save initial processing status
+            processedFile = processedFileRepository.save(processedFile);
+
             // Parse XML document
             Document document = xmlProcessor.parseXmlFile(file);
 
@@ -79,10 +85,15 @@ public abstract class BaseDocumentProcessingTemplate extends BaseDocumentProcess
             processedFile.setContent(xmlProcessor.serializeDocument(document));
             return processedFileRepository.save(processedFile);
 
+        } catch (ValidationException e) {
+            log.error("Validation error processing document {}: {}", file.getOriginalFilename(), e.getMessage());
+            processedFile.setStatus("ERROR");
+            processedFile.setErrorMessage("Validation error: " + e.getMessage());
+            return processedFileRepository.save(processedFile);
         } catch (Exception e) {
             log.error("Error processing document {}: {}", file.getOriginalFilename(), e.getMessage(), e);
             processedFile.setStatus("ERROR");
-            processedFile.setErrorMessage(e.getMessage());
+            processedFile.setErrorMessage("Processing error: " + e.getMessage());
             return processedFileRepository.save(processedFile);
         }
     }

@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.NamedEntityGraphs;
 import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.NamedAttributeNode;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "asn_headers")
@@ -50,7 +51,7 @@ public class AsnHeader extends BaseEntity {
     private String businessPartnerName;
 
     @Column(name = "receipt_dttm", nullable = false)
-    private String receiptDttm;
+    private LocalDateTime receiptDttm;
 
     @Column(name = "asn_level", nullable = false)
     private Integer asnLevel;
@@ -339,4 +340,12 @@ public class AsnHeader extends BaseEntity {
     @OneToMany(mappedBy = "header", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private Set<AsnLine> lines = new HashSet<>();
+
+    public LocalDateTime getReceiptDttm() {
+        return receiptDttm;
+    }
+
+    public void setReceiptDttm(LocalDateTime receiptDttm) {
+        this.receiptDttm = receiptDttm;
+    }
 }

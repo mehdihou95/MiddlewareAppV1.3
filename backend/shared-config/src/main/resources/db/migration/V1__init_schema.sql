@@ -86,7 +86,7 @@ CREATE TABLE asn_headers (
     asn_type INTEGER NOT NULL,
     business_partner_id VARCHAR(50),
     business_partner_name VARCHAR(50),
-    receipt_dttm VARCHAR(255) NOT NULL,
+    receipt_dttm TIMESTAMP NOT NULL,
     asn_level INTEGER NOT NULL DEFAULT 0,
     region_id BIGINT,
     business_partner_address_1 VARCHAR(75),
@@ -318,6 +318,7 @@ CREATE TABLE mapping_rules (
     priority INTEGER,
     source_field VARCHAR(255),
     target_field VARCHAR(255),
+    target_level VARCHAR(20) NOT NULL DEFAULT 'HEADER',
     validation_rule VARCHAR(255),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     table_name VARCHAR(255),
@@ -454,6 +455,7 @@ CREATE INDEX idx_asn_headers_document_number ON asn_headers(asn_number);
 CREATE INDEX idx_asn_lines_item_number ON asn_lines(item_number);
 CREATE INDEX idx_processed_files_file_name ON processed_files(file_name);
 CREATE INDEX idx_mapping_rules_source_field ON mapping_rules(source_field);
+CREATE INDEX idx_mapping_rules_target_level ON mapping_rules(target_level);
 CREATE INDEX idx_asn_headers_client_id ON asn_headers(client_id);
 CREATE INDEX idx_asn_lines_client_id ON asn_lines(client_id);
 CREATE INDEX idx_processed_files_client_id ON processed_files(client_id);

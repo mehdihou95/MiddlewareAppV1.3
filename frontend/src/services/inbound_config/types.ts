@@ -15,6 +15,7 @@ export interface MappingRule {
   description: string;
   sourceField?: string;
   targetField?: string;
+  targetLevel?: 'HEADER' | 'LINE';
   transformationType?: string;
   transformationRule?: string;
   required?: boolean;

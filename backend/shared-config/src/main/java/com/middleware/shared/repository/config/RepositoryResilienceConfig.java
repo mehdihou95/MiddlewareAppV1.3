@@ -19,6 +19,11 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.sql.SQLException;
+import java.sql.SQLTimeoutException;
+import java.io.IOException;
+import javax.xml.stream.XMLStreamException;
+import com.middleware.shared.exception.ValidationException;
 
 /**
  * Configuration class for repository resilience patterns.
@@ -38,18 +43,66 @@ public class RepositoryResilienceConfig {
     public CircuitBreakerConfig repositoryCircuitBreakerConfig() {
         log.info("Configuring repository circuit breaker with custom settings");
         return CircuitBreakerConfig.custom()
-                .failureRateThreshold(40)
-                .slowCallRateThreshold(50)
-                .slowCallDurationThreshold(Duration.ofSeconds(1))
-                .waitDurationInOpenState(Duration.ofSeconds(10))
+                .failureRateThreshold(30)
+                .slowCallRateThreshold(40)
+                .slowCallDurationThreshold(Duration.ofMillis(500))
+                .waitDurationInOpenState(Duration.ofSeconds(30))
+                .slidingWindowSize(20)
+                .minimumNumberOfCalls(10)
+                .permittedNumberOfCallsInHalfOpenState(5)
+                .recordExceptions(
+                    DataAccessException.class,
+                    TimeoutException.class,
+                    QueryTimeoutException.class,
+                    TransientDataAccessException.class,
+                    SQLException.class,
+                    SQLTimeoutException.class
+                )
+                .ignoreExceptions(
+                    BaseValidationException.class,
+                    IllegalArgumentException.class
+                )
+                .build();
+    }
+
+    @Bean
+    public CircuitBreakerConfig fileProcessingCircuitBreakerConfig() {
+        log.info("Configuring file processing circuit breaker with custom settings");
+        return CircuitBreakerConfig.custom()
+                .failureRateThreshold(20)  // More conservative for file processing
+                .slowCallRateThreshold(30)
+                .slowCallDurationThreshold(Duration.ofSeconds(2))  // Longer duration for file processing
+                .waitDurationInOpenState(Duration.ofSeconds(60))  // Longer wait time
                 .slidingWindowSize(10)
                 .minimumNumberOfCalls(5)
                 .permittedNumberOfCallsInHalfOpenState(3)
                 .recordExceptions(
                     DataAccessException.class,
                     TimeoutException.class,
-                    QueryTimeoutException.class,
-                    TransientDataAccessException.class
+                    IOException.class,
+                    XMLStreamException.class
+                )
+                .ignoreExceptions(
+                    BaseValidationException.class,
+                    IllegalArgumentException.class
+                )
+                .build();
+    }
+
+    @Bean
+    public CircuitBreakerConfig validationCircuitBreakerConfig() {
+        log.info("Configuring validation circuit breaker with custom settings");
+        return CircuitBreakerConfig.custom()
+                .failureRateThreshold(40)  // Less conservative for validation
+                .slowCallRateThreshold(50)
+                .slowCallDurationThreshold(Duration.ofMillis(200))  // Shorter duration for validation
+                .waitDurationInOpenState(Duration.ofSeconds(15))
+                .slidingWindowSize(15)
+                .minimumNumberOfCalls(5)
+                .permittedNumberOfCallsInHalfOpenState(3)
+                .recordExceptions(
+                    ValidationException.class,
+                    DataAccessException.class
                 )
                 .ignoreExceptions(
                     BaseValidationException.class,
@@ -64,9 +117,9 @@ public class RepositoryResilienceConfig {
      */
     @Bean
     public TimeLimiterConfig repositoryTimeLimiterConfig() {
-        log.info("Configuring repository time limiter with 2 second timeout");
+        log.info("Configuring repository time limiter with 1 second timeout");
         return TimeLimiterConfig.custom()
-                .timeoutDuration(Duration.ofSeconds(2))
+                .timeoutDuration(Duration.ofSeconds(1))
                 .cancelRunningFuture(true)
                 .build();
     }

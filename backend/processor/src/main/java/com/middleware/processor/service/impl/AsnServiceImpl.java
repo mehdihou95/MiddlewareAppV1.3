@@ -109,7 +109,7 @@ public class AsnServiceImpl implements AsnService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public AsnHeader createAsnHeader(AsnHeader header) {
         validateAsnHeader(header);
         return circuitBreakerService.executeRepositoryOperation(
@@ -133,7 +133,7 @@ public class AsnServiceImpl implements AsnService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public AsnHeader updateAsnHeader(Long id, AsnHeader headerDetails) {
         return circuitBreakerService.executeRepositoryOperation(
             () -> {
@@ -159,7 +159,7 @@ public class AsnServiceImpl implements AsnService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteAsnHeader(Long id) {
         circuitBreakerService.executeVoidRepositoryOperation(
             () -> {
@@ -272,7 +272,7 @@ public class AsnServiceImpl implements AsnService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public AsnLine createAsnLine(AsnLine line) {
         validateAsnLine(line);
         return circuitBreakerService.executeRepositoryOperation(
@@ -286,7 +286,7 @@ public class AsnServiceImpl implements AsnService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public AsnLine updateAsnLine(Long id, AsnLine lineDetails) {
         return circuitBreakerService.executeRepositoryOperation(
             () -> {
@@ -313,7 +313,7 @@ public class AsnServiceImpl implements AsnService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public void deleteAsnLine(Long id) {
         circuitBreakerService.executeVoidRepositoryOperation(
             () -> {
@@ -330,7 +330,7 @@ public class AsnServiceImpl implements AsnService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public List<AsnLine> createAsnLines(List<AsnLine> lines) {
         if (lines == null || lines.isEmpty()) {
             return List.of();

@@ -165,4 +165,9 @@ public interface MappingRuleService {
         String tableName, 
         Pageable pageable
     );
+
+    /**
+     * Updates the target level for all mapping rules based on their table name.
+     */
+    void updateTargetLevels();
 } 

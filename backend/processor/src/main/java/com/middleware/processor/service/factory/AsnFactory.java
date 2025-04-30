@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.time.LocalDateTime;
 
 /**
  * Factory service for creating ASN entities with default values.
@@ -74,14 +75,24 @@ public class AsnFactory {
         // Required relationship
         header.setClient(client);
         
-        // Non-nullable fields get defaults
+        // Non-nullable fields from schema
         header.setStatus("NEW");                    // Required status
         header.setAsnNumber("PENDING");             // Required ASN number
-        header.setAsnType(1);                       // Required type
-        header.setCreatedSourceType(0);             // Required audit field
-        header.setLastUpdatedSourceType(0);         // Required audit field
+        header.setAsnType(defaultAsnType);          // Required type (from properties)
+        header.setAsnLevel(defaultAsnLevel);        // Required level (from properties)
+        header.setAsnPriority(defaultAsnPriority);  // Required priority (from properties)
+        header.setScheduleAppt(defaultScheduleAppt); // Required schedule appointment (from properties)
+        header.setReceiptDttm(LocalDateTime.now()); // Required receipt date
+        header.setQualityAuditPercent(defaultQualityAuditPercent); // Required quality audit percent
+        header.setIsWhseTransfer(defaultWhseTransfer); // Required warehouse transfer flag
         
-        // Required boolean flags (cannot be null in database)
+        // Required audit fields
+        header.setCreatedSourceType(defaultSourceType);     // Required source type
+        header.setLastUpdatedSourceType(defaultSourceType); // Required source type
+        header.setCreatedAt(LocalDateTime.now());
+        header.setUpdatedAt(LocalDateTime.now());
+        
+        // Required boolean flags
         header.setHasImportError(false);
         header.setHasSoftCheckError(false);
         header.setHasAlerts(false);
@@ -109,14 +120,20 @@ public class AsnFactory {
         line.setHeader(header);
         line.setClient(client);
         
-        // Non-nullable fields get defaults
+        // Non-nullable fields from schema
         line.setStatus("NEW");                      // Required status
         line.setLineNumber(String.format("%03d", defaultLineCounter.incrementAndGet())); // Required line number
         line.setQuantity(0);                        // Required quantity
-        line.setUnitOfMeasure("EA");               // Required UOM
-        line.setIsCancelled(0);                     // Required flag
-        line.setCreatedSourceType(0);               // Required audit field
-        line.setLastUpdatedSourceType(0);           // Required audit field
+        line.setUnitOfMeasure(defaultUnitOfMeasure); // Required UOM (from properties)
+        line.setAsnDetailStatus(defaultAsnDetailStatus); // Required detail status (from properties)
+        line.setIsCancelled(0);                     // Required cancelled flag
+        line.setQtyConvFactor(defaultQtyConvFactor); // Required conversion factor
+        
+        // Required audit fields
+        line.setCreatedSourceType(defaultSourceType);     // Required source type
+        line.setLastUpdatedSourceType(defaultSourceType); // Required source type
+        line.setCreatedAt(LocalDateTime.now());
+        line.setUpdatedAt(LocalDateTime.now());
         
         return line;
     }
