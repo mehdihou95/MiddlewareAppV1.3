@@ -48,6 +48,17 @@
       "auto_delete": false,
       "internal": false,
       "arguments": {}
+    },
+    {
+      "name": "middleware.priority",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {
+        "x-max-priority": 10
+      }
     }
   ],
   "queues": [
@@ -62,7 +73,8 @@
         "x-dead-letter-routing-key": "inbound.processor.dlq",
         "x-max-length": 10000,
         "x-max-length-bytes": 104857600,
-        "x-overflow": "reject-publish"
+        "x-overflow": "reject-publish",
+        "x-queue-mode": "lazy"
       }
     },
     {
@@ -72,7 +84,8 @@
       "auto_delete": false,
       "arguments": {
         "x-message-ttl": 604800000,
-        "x-max-length": 1000
+        "x-max-length": 1000,
+        "x-queue-mode": "lazy"
       }
     },
     {
@@ -86,7 +99,8 @@
         "x-dead-letter-routing-key": "outbound.dispatcher.dlq",
         "x-max-length": 10000,
         "x-max-length-bytes": 104857600,
-        "x-overflow": "reject-publish"
+        "x-overflow": "reject-publish",
+        "x-queue-mode": "lazy"
       }
     },
     {
@@ -96,7 +110,56 @@
       "auto_delete": false,
       "arguments": {
         "x-message-ttl": 604800000,
-        "x-max-length": 1000
+        "x-max-length": 1000,
+        "x-queue-mode": "lazy"
+      }
+    },
+    {
+      "name": "client.high.priority",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "middleware.dlx",
+        "x-dead-letter-routing-key": "client.high.priority.dlq",
+        "x-max-length": 10000,
+        "x-max-length-bytes": 104857600,
+        "x-overflow": "reject-publish",
+        "x-queue-mode": "lazy",
+        "x-max-priority": 10
+      }
+    },
+    {
+      "name": "client.normal.priority",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "middleware.dlx",
+        "x-dead-letter-routing-key": "client.normal.priority.dlq",
+        "x-max-length": 10000,
+        "x-max-length-bytes": 104857600,
+        "x-overflow": "reject-publish",
+        "x-queue-mode": "lazy",
+        "x-max-priority": 10
+      }
+    },
+    {
+      "name": "client.low.priority",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "middleware.dlx",
+        "x-dead-letter-routing-key": "client.low.priority.dlq",
+        "x-max-length": 10000,
+        "x-max-length-bytes": 104857600,
+        "x-overflow": "reject-publish",
+        "x-queue-mode": "lazy",
+        "x-max-priority": 10
       }
     }
   ],
@@ -131,6 +194,30 @@
       "destination": "outbound.dispatcher.dlq",
       "destination_type": "queue",
       "routing_key": "outbound.dispatcher.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "middleware.priority",
+      "vhost": "/",
+      "destination": "client.high.priority",
+      "destination_type": "queue",
+      "routing_key": "high",
+      "arguments": {}
+    },
+    {
+      "source": "middleware.priority",
+      "vhost": "/",
+      "destination": "client.normal.priority",
+      "destination_type": "queue",
+      "routing_key": "normal",
+      "arguments": {}
+    },
+    {
+      "source": "middleware.priority",
+      "vhost": "/",
+      "destination": "client.low.priority",
+      "destination_type": "queue",
+      "routing_key": "low",
       "arguments": {}
     }
   ]

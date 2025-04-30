@@ -71,6 +71,11 @@ public class ProcessedFile extends BaseEntity {
     @Column
     private byte[] contentBytes; // Only used if storageType is "DB"
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "asn_id")
+    @JsonBackReference
+    private AsnHeader asnHeader;
+
     @PrePersist
     protected void onCreate() {
         super.onCreate();

@@ -66,6 +66,14 @@ public class Interface extends BaseEntity {
     @Column(nullable = false)
     private int priority = 0;
 
+    public boolean isHighPriority() {
+        return priority >= 8;
+    }
+
+    public boolean isNormalPriority() {
+        return priority >= 4 && priority < 8;
+    }
+
     @OneToMany(mappedBy = "interfaceEntity", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private Set<MappingRule> mappingRules = new HashSet<>();

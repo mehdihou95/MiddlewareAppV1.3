@@ -341,6 +341,9 @@ public class AsnHeader extends BaseEntity {
     @JsonManagedReference
     private Set<AsnLine> lines = new HashSet<>();
 
+    @OneToOne(mappedBy = "asnHeader", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ProcessedFile processedFile;
+
     public LocalDateTime getReceiptDttm() {
         return receiptDttm;
     }

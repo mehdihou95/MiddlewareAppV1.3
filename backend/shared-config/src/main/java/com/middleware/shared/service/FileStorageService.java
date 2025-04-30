@@ -14,21 +14,37 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.List;
 
+/**
+ * Abstract base service for file storage operations.
+ * Provides common functionality for storing and retrieving files.
+ */
 @Service
-public class FileStorageService {
+public abstract class FileStorageService {
     private static final Logger log = LoggerFactory.getLogger(FileStorageService.class);
 
     @Value("${app.file.storage.directory:./storage}")
-    private String storageDirectory;
+    protected String storageDirectory;
 
+    @Value("${app.file.storage.max-size:1048576}")
+    protected long maxFileSize;
+
+    @Value("${app.file.storage.allowed-extensions:xml,json,csv}")
+    protected List<String> allowedExtensions;
+
+    /**
+     * Stores a file based on its size and configuration.
+     * @param processedFile The processed file metadata
+     * @param file The file to store
+     * @throws IOException if storage fails
+     */
     public void storeFile(ProcessedFile processedFile, MultipartFile file) throws IOException {
-        if (file == null || file.isEmpty()) {
-            throw new ValidationException("File is empty or null");
-        }
-
+        validateFile(file);
+        
         try {
-            if (file.getSize() > 1024 * 1024) { // 1MB threshold
+            if (shouldStoreInFileSystem(file)) {
                 storeInFileSystem(processedFile, file);
             } else {
                 storeInDatabase(processedFile, file);
@@ -41,7 +57,49 @@ public class FileStorageService {
         }
     }
 
-    private void storeInFileSystem(ProcessedFile processedFile, MultipartFile file) throws IOException {
+    /**
+     * Determines if a file should be stored in the filesystem.
+     * Can be overridden by subclasses to implement custom storage strategies.
+     * @param file The file to check
+     * @return true if the file should be stored in filesystem
+     */
+    protected boolean shouldStoreInFileSystem(MultipartFile file) {
+        return file.getSize() > maxFileSize;
+    }
+
+    /**
+     * Validates the file before storage.
+     * Can be overridden by subclasses to add custom validation rules.
+     * @param file The file to validate
+     * @throws ValidationException if validation fails
+     */
+    protected void validateFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ValidationException("File is empty or null");
+        }
+
+        if (file.getSize() > maxFileSize) {
+            throw new ValidationException("File size exceeds maximum allowed size");
+        }
+
+        String filename = file.getOriginalFilename();
+        if (filename == null) {
+            throw new ValidationException("Invalid filename");
+        }
+
+        String extension = filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
+        if (!allowedExtensions.contains(extension)) {
+            throw new ValidationException("File type not allowed. Allowed types: " + allowedExtensions);
+        }
+    }
+
+    /**
+     * Stores a file in the filesystem.
+     * @param processedFile The processed file metadata
+     * @param file The file to store
+     * @throws IOException if storage fails
+     */
+    protected void storeInFileSystem(ProcessedFile processedFile, MultipartFile file) throws IOException {
         String fileName = StringUtils.cleanPath(file.getOriginalFilename());
         Path targetLocation = Paths.get(storageDirectory).resolve(fileName);
         
@@ -53,12 +111,24 @@ public class FileStorageService {
         processedFile.setContent("File stored in filesystem: " + fileName);
     }
 
-    private void storeInDatabase(ProcessedFile processedFile, MultipartFile file) throws IOException {
+    /**
+     * Stores a file in the database.
+     * @param processedFile The processed file metadata
+     * @param file The file to store
+     * @throws IOException if storage fails
+     */
+    protected void storeInDatabase(ProcessedFile processedFile, MultipartFile file) throws IOException {
         processedFile.setStorageType("DB");
         processedFile.setContentBytes(file.getBytes());
         processedFile.setContent("File stored in database: " + file.getOriginalFilename());
     }
 
+    /**
+     * Retrieves a file based on its storage type.
+     * @param processedFile The processed file metadata
+     * @return The file content as bytes
+     * @throws IOException if retrieval fails
+     */
     public byte[] retrieveFile(ProcessedFile processedFile) throws IOException {
         if (processedFile == null) {
             throw new ValidationException("ProcessedFile is null");

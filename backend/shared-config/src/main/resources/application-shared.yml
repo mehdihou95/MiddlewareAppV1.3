@@ -1,20 +1,40 @@
 # Shared Database Configuration
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:middleware_config}
-    username: ${DB_USER:middleware_user}
-    password: ${DB_PASSWORD:secure_password}
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:h2:file:./data/middleware;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
   
   # JPA Configuration
   jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.dialect.H2Dialect
+        jdbc:
+          batch_size: 30
+          batch_versioned_data: true
+        order_inserts: true
+        order_updates: true
+        generate_statistics: ${HIBERNATE_STATS:false}
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region.factory_class: org.hibernate.cache.ehcache.EhCacheRegionFactory
+        session:
+          events:
+            log: false
   
   # Resilience4j Configuration
   resilience4j:
@@ -59,6 +79,14 @@ spring:
     host: ${REDIS_HOST:localhost}
     port: ${REDIS_PORT:6379}
     password: ${REDIS_PASSWORD:}
+    database: 0
+    timeout: 5000
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1
   
   # Session Configuration
   session:
@@ -104,8 +132,7 @@ logging:
   level:
     root: INFO
     com.middleware: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
+    org.springframework: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
@@ -119,14 +146,13 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,circuitbreakers
+        include: health,info,metrics,prometheus
       base-path: /actuator
   endpoint:
     health:
-      show-details: when_authorized
-      roles: ADMIN
-      probes:
-        enabled: true
+      show-details: always
+    metrics:
+      enabled: true
     prometheus:
       enabled: true
   metrics:
@@ -156,4 +182,14 @@ management:
     livenessstate:
       enabled: true
     readinessstate:
-      enabled: true 
+      enabled: true
+
+# File Storage Configuration
+file:
+  storage:
+    directory: ./data/files
+    max-size: 10485760
+    allowed-extensions: xml,json,txt
+    compression:
+      enabled: true
+      level: 6 

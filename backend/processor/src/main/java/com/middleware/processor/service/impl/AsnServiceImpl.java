@@ -33,6 +33,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.format.DateTimeFormatter;
 import org.springframework.scheduling.annotation.Scheduled;
+import com.middleware.processor.metrics.ProcessingMetrics;
 
 /**
  * Implementation of AsnService with Circuit Breaker pattern.
@@ -46,6 +47,7 @@ public class AsnServiceImpl implements AsnService {
     private final AsnHeaderRepository asnHeaderRepository;
     private final AsnLineRepository asnLineRepository;
     private final CircuitBreakerService circuitBreakerService;
+    private final ProcessingMetrics processingMetrics;
 
     @Value("${asn.batch.min-size:10}")
     private int minBatchSize;
@@ -389,18 +391,25 @@ public class AsnServiceImpl implements AsnService {
                         // Save batch
                         result.addAll(asnLineRepository.saveAll(batch));
                         
-                        // Adjust batch size based on performance
-                        adjustBatchSize(System.currentTimeMillis() - startTime);
+                        // Record batch processing metrics
+                        processingMetrics.getBatchMetrics().recordBatchProcessing(startTime);
+                        processingMetrics.getBatchMetrics().recordDocumentProcessing();
                     }
                     
                     return result;
                 },
                 () -> {
                     // Fallback: return lines with error status
-                    lines.forEach(line -> line.setStatus("ERROR - Circuit breaker open"));
+                    lines.forEach(line -> {
+                        line.setStatus("ERROR - Circuit breaker open");
+                        processingMetrics.getBatchMetrics().recordDocumentFailure();
+                    });
                     return lines;
                 }
             );
+        } catch (Exception e) {
+            processingMetrics.getBatchMetrics().recordBatchFailure();
+            throw e;
         } finally {
             // Update metrics
             long processingTime = System.currentTimeMillis() - startTime;

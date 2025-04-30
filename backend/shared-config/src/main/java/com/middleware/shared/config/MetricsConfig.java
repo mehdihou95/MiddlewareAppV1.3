@@ -1,4 +1,4 @@
-package com.example.shared.config;
+package com.middleware.shared.config;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;

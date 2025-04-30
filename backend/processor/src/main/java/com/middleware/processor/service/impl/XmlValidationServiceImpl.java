@@ -60,9 +60,9 @@ public class XmlValidationServiceImpl implements XmlValidationService {
      * Configure system properties for XML parsing
      */
     private void configureSystemProperties() {
-        System.setProperty("jdk.xml.entityExpansionLimit", validationConfig.getEntityExpansionLimit());
-        System.setProperty("entityExpansionLimit", validationConfig.getEntityExpansionLimit());
-        System.setProperty("jdk.xml.maxOccurLimit", validationConfig.getEntityExpansionLimit());
+        System.setProperty("jdk.xml.entityExpansionLimit", String.valueOf(validationConfig.getEntityExpansionLimit()));
+        System.setProperty("entityExpansionLimit", String.valueOf(validationConfig.getEntityExpansionLimit()));
+        System.setProperty("jdk.xml.maxOccurLimit", String.valueOf(validationConfig.getEntityExpansionLimit()));
         System.setProperty("javax.xml.accessExternalDTD", validationConfig.isEnableExternalDtd() ? "all" : "");
         System.setProperty("javax.xml.accessExternalSchema", validationConfig.isEnableExternalSchema() ? "all" : "");
         

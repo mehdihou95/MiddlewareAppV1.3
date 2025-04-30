@@ -1,6 +1,6 @@
-package com.example.processor.batch;
+package com.middleware.processor.batch;
 
-import io.micrometer.core.instrument.MeterRegistry;
+import com.middleware.processor.metrics.ProcessingMetrics;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DynamicBatchSizingService {
 
     private final RabbitAdmin rabbitAdmin;
-    private final MeterRegistry meterRegistry;
+    private final ProcessingMetrics processingMetrics;
     private final AtomicInteger currentBatchSize;
     private final int minBatchSize;
     private final int maxBatchSize;
@@ -20,13 +20,13 @@ public class DynamicBatchSizingService {
     private final int adjustmentStep;
 
     public DynamicBatchSizingService(RabbitAdmin rabbitAdmin,
-                                   MeterRegistry meterRegistry,
+                                   ProcessingMetrics processingMetrics,
                                    @Value("${batch.min-size:10}") int minBatchSize,
                                    @Value("${batch.max-size:100}") int maxBatchSize,
                                    @Value("${batch.queue-depth-threshold:1000}") int queueDepthThreshold,
                                    @Value("${batch.adjustment-step:10}") int adjustmentStep) {
         this.rabbitAdmin = rabbitAdmin;
-        this.meterRegistry = meterRegistry;
+        this.processingMetrics = processingMetrics;
         this.minBatchSize = minBatchSize;
         this.maxBatchSize = maxBatchSize;
         this.queueDepthThreshold = queueDepthThreshold;
@@ -42,7 +42,7 @@ public class DynamicBatchSizingService {
         int newBatchSize = calculateNewBatchSize(queueDepth, systemLoad);
         currentBatchSize.set(newBatchSize);
         
-        meterRegistry.gauge("processor.batch.size", currentBatchSize);
+        processingMetrics.getQueueMetrics().monitorQueueDepth();
     }
 
     private int getQueueDepth() {
@@ -51,7 +51,7 @@ public class DynamicBatchSizingService {
     }
 
     private double getSystemLoad() {
-        return meterRegistry.get("system.cpu.usage")
+        return processingMetrics.getRegistry().get("system.cpu.usage")
             .gauge()
             .value();
     }

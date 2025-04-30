@@ -8,7 +8,7 @@ import java.util.HashMap;
  * Processor-specific validation exception.
  * Extends BaseValidationException to provide additional functionality specific to the processor module.
  */
-public class ValidationException extends RuntimeException {
+public class ValidationException extends BaseValidationException {
     
     private final Map<String, String> fieldErrors = new HashMap<>();
     
