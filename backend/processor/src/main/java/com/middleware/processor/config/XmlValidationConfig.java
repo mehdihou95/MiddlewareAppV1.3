@@ -23,8 +23,8 @@ public class XmlValidationConfig {
     private boolean honourAllSchemaLocations = true;
     private boolean enableSchemaFullChecking = true;
     private Map<String, Boolean> additionalFeatures;
-    private String schemaBasePath = "schemas";
-    private String defaultSchemaPath = "default.xsd";
+    private String schemaBasePath = "src/main/resources/xsd";
+    private String defaultSchemaPath = "order_default_namespace.xsd";
 
     @Bean
     @Primary
@@ -32,7 +32,7 @@ public class XmlValidationConfig {
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         
         // Set security features
-        factory.setProperty(XMLConstants.FEATURE_SECURE_PROCESSING, secureProcessing);
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, secureProcessing);
         factory.setProperty("http://apache.org/xml/properties/security-manager", null);
         
         // Set entity expansion limit

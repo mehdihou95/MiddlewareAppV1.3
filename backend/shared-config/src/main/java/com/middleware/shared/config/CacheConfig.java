@@ -24,16 +24,16 @@ import java.util.Arrays;
 @EnableCaching
 public class CacheConfig {
     
-    @Value("${redis.enabled:false}")
+    @Value("${spring.redis.enabled:false}")
     private boolean redisEnabled;
     
-    @Value("${redis.host:localhost}")
+    @Value("${spring.redis.host:localhost}")
     private String redisHost;
     
-    @Value("${redis.port:6379}")
+    @Value("${spring.redis.port:6379}")
     private int redisPort;
     
-    @Value("${redis.password:}")
+    @Value("${spring.redis.password:}")
     private String redisPassword;
     
     // Cache names used across the application
@@ -68,7 +68,7 @@ public class CacheConfig {
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         if (!redisEnabled) {
-            return null;
+            throw new IllegalStateException("Redis is not enabled. Please set redis.enabled=true to use Redis caching.");
         }
         
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
@@ -91,6 +91,26 @@ public class CacheConfig {
         }
         
         RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    /**
+     * Redis template specifically for validation results using Boolean values.
+     * Only created when Redis is enabled.
+     */
+    @Bean
+    public RedisTemplate<String, Boolean> validationResultRedisTemplate(RedisConnectionFactory connectionFactory) {
+        if (!redisEnabled || connectionFactory == null) {
+            return null;
+        }
+        
+        RedisTemplate<String, Boolean> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());

@@ -1,6 +1,6 @@
 # Server Configuration
 server:
-  port: 8081
+  port: 8082
 
 spring:
   profiles:
@@ -23,12 +23,61 @@ spring:
         initial-interval: 1000
         multiplier: 2.0
         max-interval: 10000
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    url: jdbc:postgresql://localhost:5433/middleware_config
+    username: middleware_user
+    password: secure_password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        default_schema: public
+        jdbc:
+          lob:
+            non_contextual_creation: true
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region:
+            factory_class: org.hibernate.cache.jcache.internal.JCacheRegionFactory
+          provider_class: org.ehcache.jsr107.EhcacheCachingProvider
+          missing_cache_strategy: create
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    schemas: public
+    table: flyway_schema_history
+    repair-on-migrate: true
+    validate-on-migrate: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  redis:
+    enabled: false
+  boot:
+    admin:
+      client:
+        enabled: false
+  data:
+    redis:
+      repositories:
+        enabled: false
 
 # AS2 Configuration
 as2:
   serverId: MiddlewareAS2Server
   serverHost: localhost
-  serverPort: 8081
+  serverPort: 8082
   keyStorePath: keystore.jks
   keyStorePassword: password
   privateKeyAlias: as2key
@@ -77,4 +126,9 @@ sftp:
   retryDelay: 5000
   root: ./sftp_root
   processedDirectory: processed
-  errorDirectory: error 
+  errorDirectory: error
+
+management:
+  health:
+    redis:
+      enabled: false 

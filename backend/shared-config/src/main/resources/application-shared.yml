@@ -1,10 +1,10 @@
 # Shared Database Configuration
 spring:
   datasource:
-    url: jdbc:h2:file:./data/middleware;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    password: 
-    driver-class-name: org.h2.Driver
+    url: jdbc:postgresql://localhost:5433/middleware_config
+    username: middleware_user
+    password: secure_password
+    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -14,14 +14,14 @@ spring:
   
   # JPA Configuration
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.H2Dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
           batch_size: 30
           batch_versioned_data: true
@@ -31,7 +31,9 @@ spring:
         cache:
           use_second_level_cache: true
           use_query_cache: true
-          region.factory_class: org.hibernate.cache.ehcache.EhCacheRegionFactory
+          region.factory_class: org.hibernate.cache.jcache.internal.JCacheRegionFactory
+          provider_class: org.ehcache.jsr107.EhcacheCachingProvider
+          missing_cache_strategy: create
         session:
           events:
             log: false
@@ -73,12 +75,16 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
     clean-disabled: true
+    url: jdbc:postgresql://localhost:5433/middleware_config
+    user: middleware_user
+    password: secure_password
   
   # Redis Configuration
   redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:}
+    enabled: true
+    host: localhost
+    port: 6379
+    password: 
     database: 0
     timeout: 5000
     lettuce:
@@ -87,6 +93,15 @@ spring:
         max-idle: 8
         min-idle: 0
         max-wait: -1
+      shutdown-timeout: 100
+    client-type: lettuce
+  data:
+    redis:
+      repositories:
+        enabled: true
+      connect-timeout: 5000
+      read-timeout: 5000
+      write-timeout: 5000
   
   # Session Configuration
   session:
@@ -97,10 +112,10 @@ spring:
 
   # RabbitMQ Configuration
   rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:admin}
-    password: ${RABBITMQ_PASSWORD:admin}
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin
     listener:
       simple:
         retry:

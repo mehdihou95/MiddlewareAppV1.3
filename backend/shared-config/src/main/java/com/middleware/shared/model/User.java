@@ -44,13 +44,13 @@ public class User implements UserDetails {
     @Column(name = "roles", nullable = false)
     private List<String> roles = new ArrayList<>();
 
-    @Column(nullable = false)
+    @Column(name = "account_non_expired", nullable = false)
     private boolean accountNonExpired = true;
 
-    @Column(nullable = false)
+    @Column(name = "account_non_locked", nullable = false)
     private boolean accountNonLocked = true;
 
-    @Column(nullable = false)
+    @Column(name = "credentials_non_expired", nullable = false)
     private boolean credentialsNonExpired = true;
 
     @Column(nullable = false)

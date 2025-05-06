@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import java.util.HashSet;
 import java.util.Set;
 import com.middleware.shared.model.connectors.SftpConfig;
+import lombok.EqualsAndHashCode;
 
 /**
  * Entity representing an interface in the system.
@@ -21,6 +22,7 @@ import com.middleware.shared.model.connectors.SftpConfig;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @JsonIdentityInfo(
     generator = ObjectIdGenerators.PropertyGenerator.class,
     property = "id"

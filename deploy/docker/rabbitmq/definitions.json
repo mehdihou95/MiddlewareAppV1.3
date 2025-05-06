@@ -161,6 +161,60 @@
         "x-queue-mode": "lazy",
         "x-max-priority": 10
       }
+    },
+    {
+      "name": "inbound.processor.asn.high",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "middleware.dlx",
+        "x-dead-letter-routing-key": "inbound.processor.asn.high.dlq",
+        "x-max-length": 10000,
+        "x-max-length-bytes": 104857600,
+        "x-overflow": "reject-publish",
+        "x-queue-mode": "lazy",
+        "x-max-priority": 10
+      }
+    },
+    {
+      "name": "inbound.processor.asn.high.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 604800000,
+        "x-max-length": 1000,
+        "x-queue-mode": "lazy"
+      }
+    },
+    {
+      "name": "inbound.processor.order.high",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "middleware.dlx",
+        "x-dead-letter-routing-key": "inbound.processor.order.high.dlq",
+        "x-max-length": 10000,
+        "x-max-length-bytes": 104857600,
+        "x-overflow": "reject-publish",
+        "x-queue-mode": "lazy",
+        "x-max-priority": 10
+      }
+    },
+    {
+      "name": "inbound.processor.order.high.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 604800000,
+        "x-max-length": 1000,
+        "x-queue-mode": "lazy"
+      }
     }
   ],
   "bindings": [
@@ -218,6 +272,38 @@
       "destination": "client.low.priority",
       "destination_type": "queue",
       "routing_key": "low",
+      "arguments": {}
+    },
+    {
+      "source": "middleware.direct",
+      "vhost": "/",
+      "destination": "inbound.processor.asn.high",
+      "destination_type": "queue",
+      "routing_key": "inbound.processor.asn.high",
+      "arguments": {}
+    },
+    {
+      "source": "middleware.dlx",
+      "vhost": "/",
+      "destination": "inbound.processor.asn.high.dlq",
+      "destination_type": "queue",
+      "routing_key": "inbound.processor.asn.high.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "middleware.direct",
+      "vhost": "/",
+      "destination": "inbound.processor.order.high",
+      "destination_type": "queue",
+      "routing_key": "inbound.processor.order.high",
+      "arguments": {}
+    },
+    {
+      "source": "middleware.dlx",
+      "vhost": "/",
+      "destination": "inbound.processor.order.high.dlq",
+      "destination_type": "queue",
+      "routing_key": "inbound.processor.order.high.dlq",
       "arguments": {}
     }
   ]

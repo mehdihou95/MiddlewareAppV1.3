@@ -452,9 +452,38 @@ public class SftpCamelConfig {
                         // Set processing headers
                         .setHeader("filename", simple("${header.CamelFileName}"))
                         .setHeader("ProcessingStatus", constant("PROCESSING"))
+                        .setHeader("MessageType", simple("${header.InterfaceType}"))
+                        .setHeader("Priority", simple("${header.InterfacePriority}"))
+                        .setHeader("Timestamp", simple("${date:now:yyyy-MM-dd HH:mm:ss}"))
+                        .setHeader("FileSize", header(Exchange.FILE_LENGTH))
+                        .setHeader("OriginalPath", header(Exchange.FILE_PATH))
+                        .setHeader("ProcessingAttempt", constant(1))
+                        .setHeader("SourceSystem", constant("SFTP"))
                         
-                        // CHANGE: Updated RabbitMQ configuration to prevent auto-generated queues
-                        .to("rabbitmq:middleware.direct?routingKey=inbound.processor" +
+                        // Determine interface type and priority
+                        .process(exchange -> {
+                            Long interfaceId = exchange.getIn().getHeader("InterfaceId", Long.class);
+                            String priority = exchange.getIn().getHeader("Priority", String.class);
+                            if (priority == null) {
+                                priority = "NORMAL";
+                            }
+                            
+                            // TODO: Replace with actual interface type lookup
+                            String interfaceType = interfaceId == 1 ? "ASN" : "ORDER";
+                            
+                            // Set routing key based on interface type and priority
+                            String routingKey = String.format("inbound.processor.%s.%s", 
+                                interfaceType.toLowerCase(), 
+                                priority.toLowerCase());
+                            
+                            exchange.getIn().setHeader("InterfaceType", interfaceType);
+                            exchange.getIn().setHeader("RoutingKey", routingKey);
+                            
+                            log.info("Routing message to queue: {}", routingKey);
+                        })
+                        
+                        // Send to appropriate queue based on interface type and priority
+                        .toD("rabbitmq:middleware.direct?routingKey=${header.RoutingKey}" +
                             "&addresses={{spring.rabbitmq.host:localhost}}:{{spring.rabbitmq.port:5672}}" +
                             "&username={{spring.rabbitmq.username:admin}}" +
                             "&password={{spring.rabbitmq.password:admin}}" +
@@ -462,9 +491,9 @@ public class SftpCamelConfig {
                             "&autoDelete=false" +
                             "&durable=true" +
                             "&exchangeType=direct" +
-                            "&declare=false" +           // Prevent exchange declaration
-                            "&skipQueueDeclare=true" +   // Skip queue declaration
-                            "&transferException=true" +   // Better error handling
+                            "&declare=false" +
+                            "&skipQueueDeclare=true" +
+                            "&transferException=true" +
                             "&automaticRecoveryEnabled=true" +
                             "&requestedHeartbeat=60" +
                             "&networkRecoveryInterval=5000" +

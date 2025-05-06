@@ -3,6 +3,7 @@ package com.middleware.processor.config;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,9 +15,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Configuration
 public class RabbitMQConfig {
-    
-    @Value("${rabbitmq.queue.inbound.processor}")
-    private String inboundProcessorQueue;
     
     @Value("${rabbitmq.prefetch.count:30}")
     private int prefetchCount;
@@ -31,55 +29,59 @@ public class RabbitMQConfig {
     private int threadPoolSize;
     
     @Bean
-    public Queue inboundProcessorQueue() {
-        return new Queue(inboundProcessorQueue, true); // durable queue
+    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
+        return new RabbitAdmin(connectionFactory);
     }
     
+    // ASN Queues
     @Bean
-    public Queue highPriorityQueue() {
-        return QueueBuilder.durable("client.high.priority")
+    public Queue asnHighPriorityQueue() {
+        return QueueBuilder.durable("inbound.processor.asn.high")
+            .withArgument("x-message-ttl", 86400000)
             .withArgument("x-max-priority", 10)
+            .withArgument("x-dead-letter-exchange", "middleware.dlx")
+            .withArgument("x-dead-letter-routing-key", "inbound.processor.asn.high.dlq")
+            .withArgument("x-max-length", 10000)
+            .withArgument("x-max-length-bytes", 104857600)
+            .withArgument("x-overflow", "reject-publish")
+            .withArgument("x-queue-mode", "lazy")
+            .build();
+    }
+    
+    // ORDER Queues
+    @Bean
+    public Queue orderHighPriorityQueue() {
+        return QueueBuilder.durable("inbound.processor.order.high")
+            .withArgument("x-message-ttl", 86400000)
+            .withArgument("x-max-priority", 10)
+            .withArgument("x-dead-letter-exchange", "middleware.dlx")
+            .withArgument("x-dead-letter-routing-key", "inbound.processor.order.high.dlq")
+            .withArgument("x-max-length", 10000)
+            .withArgument("x-max-length-bytes", 104857600)
+            .withArgument("x-overflow", "reject-publish")
+            .withArgument("x-queue-mode", "lazy")
             .build();
     }
     
     @Bean
-    public Queue normalPriorityQueue() {
-        return QueueBuilder.durable("client.normal.priority")
-            .withArgument("x-max-priority", 10)
-            .build();
+    public DirectExchange middlewareDirectExchange() {
+        return new DirectExchange("middleware.direct", true, false);
     }
     
+    // ASN Bindings
     @Bean
-    public Queue lowPriorityQueue() {
-        return QueueBuilder.durable("client.low.priority")
-            .withArgument("x-max-priority", 10)
-            .build();
+    public Binding asnHighPriorityBinding() {
+        return BindingBuilder.bind(asnHighPriorityQueue())
+            .to(middlewareDirectExchange())
+            .with("inbound.processor.asn.high");
     }
     
+    // ORDER Bindings
     @Bean
-    public DirectExchange priorityExchange() {
-        return new DirectExchange("middleware.priority", true, false);
-    }
-    
-    @Bean
-    public Binding highPriorityBinding() {
-        return BindingBuilder.bind(highPriorityQueue())
-            .to(priorityExchange())
-            .with("high");
-    }
-    
-    @Bean
-    public Binding normalPriorityBinding() {
-        return BindingBuilder.bind(normalPriorityQueue())
-            .to(priorityExchange())
-            .with("normal");
-    }
-    
-    @Bean
-    public Binding lowPriorityBinding() {
-        return BindingBuilder.bind(lowPriorityQueue())
-            .to(priorityExchange())
-            .with("low");
+    public Binding orderHighPriorityBinding() {
+        return BindingBuilder.bind(orderHighPriorityQueue())
+            .to(middlewareDirectExchange())
+            .with("inbound.processor.order.high");
     }
     
     @Bean

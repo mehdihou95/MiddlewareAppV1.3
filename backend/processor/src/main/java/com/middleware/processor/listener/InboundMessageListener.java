@@ -42,7 +42,7 @@ public class InboundMessageListener {
     
     @Transactional
     @RabbitListener(
-        queues = "${rabbitmq.queue.inbound.processor}",
+        queues = "${spring.rabbitmq.queue.inbound.processor}",
         containerFactory = "rabbitListenerContainerFactory"
     )
     public void processMessage(Message message, Channel channel) {

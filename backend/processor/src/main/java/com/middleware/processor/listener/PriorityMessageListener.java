@@ -28,32 +28,23 @@ public class PriorityMessageListener {
     
     @Transactional
     @RabbitListener(
-        queues = "${rabbitmq.queue.inbound.processor.high}",
+        queues = "inbound.processor.asn.high",
         containerFactory = "rabbitListenerContainerFactory"
     )
-    public void processHighPriorityMessage(Message message, Channel channel) {
-        processMessage(message, channel, "high");
+    public void processAsnHighPriorityMessage(Message message, Channel channel) {
+        processMessage(message, channel, "asn", "high");
     }
     
     @Transactional
     @RabbitListener(
-        queues = "${rabbitmq.queue.inbound.processor.normal}",
+        queues = "inbound.processor.order.high",
         containerFactory = "rabbitListenerContainerFactory"
     )
-    public void processNormalPriorityMessage(Message message, Channel channel) {
-        processMessage(message, channel, "normal");
+    public void processOrderHighPriorityMessage(Message message, Channel channel) {
+        processMessage(message, channel, "order", "high");
     }
     
-    @Transactional
-    @RabbitListener(
-        queues = "${rabbitmq.queue.inbound.processor.low}",
-        containerFactory = "rabbitListenerContainerFactory"
-    )
-    public void processLowPriorityMessage(Message message, Channel channel) {
-        processMessage(message, channel, "low");
-    }
-    
-    private void processMessage(Message message, Channel channel, String priority) {
+    private void processMessage(Message message, Channel channel, String interfaceType, String priority) {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
         
         try {
@@ -70,18 +61,18 @@ public class PriorityMessageListener {
             channel.basicAck(deliveryTag, false);
             
             // 4. Record metrics
-            processingMetrics.getCounters().processedMessages(priority).increment();
-            processingMetrics.getCounters().processingSuccess("priority").increment();
+            processingMetrics.getCounters().processedMessages(interfaceType).increment();
+            processingMetrics.getCounters().processingSuccess(priority).increment();
             
         } catch (ValidationException e) {
-            handleValidationError(e, deliveryTag, channel, priority);
+            handleValidationError(e, deliveryTag, channel, interfaceType, priority);
         } catch (Exception e) {
-            handleProcessingError(e, deliveryTag, channel, priority);
+            handleProcessingError(e, deliveryTag, channel, interfaceType, priority);
         }
     }
     
-    private void handleValidationError(ValidationException e, long deliveryTag, Channel channel, String priority) {
-        log.error("Validation error processing {} priority message: {}", priority, e.getMessage());
+    private void handleValidationError(ValidationException e, long deliveryTag, Channel channel, String interfaceType, String priority) {
+        log.error("Validation error processing {} {} priority message: {}", interfaceType, priority, e.getMessage());
         try {
             // Send to DLQ
             MessageProperties properties = new MessageProperties();
@@ -89,7 +80,7 @@ public class PriorityMessageListener {
                 Collections.singletonMap("reason", "validation_error")
             ));
             Message dlqMessage = new Message(e.getMessage().getBytes(), properties);
-            rabbitTemplate.send("middleware.dlx", "inbound.processor.dlq", dlqMessage);
+            rabbitTemplate.send("middleware.dlx", String.format("inbound.processor.%s.%s.dlq", interfaceType, priority), dlqMessage);
             
             // Acknowledge original message
             channel.basicAck(deliveryTag, false);
@@ -101,8 +92,8 @@ public class PriorityMessageListener {
         }
     }
     
-    private void handleProcessingError(Exception e, long deliveryTag, Channel channel, String priority) {
-        log.error("Error processing {} priority message", priority, e);
+    private void handleProcessingError(Exception e, long deliveryTag, Channel channel, String interfaceType, String priority) {
+        log.error("Error processing {} {} priority message", interfaceType, priority, e);
         try {
             // Send to DLQ
             MessageProperties properties = new MessageProperties();
@@ -110,7 +101,7 @@ public class PriorityMessageListener {
                 Collections.singletonMap("reason", "processing_error")
             ));
             Message dlqMessage = new Message(e.getMessage().getBytes(), properties);
-            rabbitTemplate.send("middleware.dlx", "inbound.processor.dlq", dlqMessage);
+            rabbitTemplate.send("middleware.dlx", String.format("inbound.processor.%s.%s.dlq", interfaceType, priority), dlqMessage);
             
             // Acknowledge original message
             channel.basicAck(deliveryTag, false);

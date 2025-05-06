@@ -15,10 +15,10 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
   rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin
     virtual-host: /
     queue:
       inbound:
@@ -42,9 +42,10 @@ spring:
       concurrent-consumers: 3
       max-concurrent-consumers: 10
   redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:}
+    enabled: true
+    host: localhost
+    port: 6379
+    password: 
     database: 0
     timeout: 5000
     lettuce:
@@ -53,11 +54,20 @@ spring:
         max-idle: 8
         min-idle: 0
         max-wait: -1
+      shutdown-timeout: 100
+    client-type: lettuce
+  data:
+    redis:
+      repositories:
+        enabled: true
+      connect-timeout: 5000
+      read-timeout: 5000
+      write-timeout: 5000
   datasource:
-    url: jdbc:h2:file:./data/middleware;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    password: 
-    driver-class-name: org.h2.Driver
+    url: jdbc:postgresql://localhost:5433/middleware_config
+    username: middleware_user
+    password: secure_password
+    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -65,11 +75,24 @@ spring:
       connection-timeout: 20000
       max-lifetime: 1200000
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: false
+    hibernate:
+      ddl-auto: validate
     properties:
       hibernate:
         generate_statistics: true
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    clean-disabled: true
+    url: jdbc:postgresql://localhost:5433/middleware_config
+    user: middleware_user
+    password: secure_password
 
 # Processor-specific Logging
 logging:
@@ -84,6 +107,7 @@ logging:
     org.hibernate.type.descriptor.sql: TRACE
     javax.xml.validation: TRACE
     org.xml.sax: TRACE
+    org.springframework.data.redis: DEBUG
 
 # XML Validation Configuration
 xml:

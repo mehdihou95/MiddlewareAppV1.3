@@ -4,6 +4,7 @@ import com.middleware.shared.config.SharedConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
@@ -13,6 +14,7 @@ import java.util.concurrent.Executor;
  * Extends SharedConfig to inherit common configurations and adds processor-specific settings.
  */
 @Configuration
+@Import(com.middleware.shared.config.JpaConfig.class)
 public class ProcessorConfig extends SharedConfig {
     
     @Value("${processor.thread-pool.core-size:10}")

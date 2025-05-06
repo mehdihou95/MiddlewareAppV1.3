@@ -5,6 +5,7 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -18,7 +19,8 @@ public class ProcessingMetrics {
     private final BatchMetrics batchMetrics;
     private final QueueMetrics queueMetrics;
     
-    public ProcessingMetrics(MeterRegistry registry, RabbitAdmin rabbitAdmin, Queue inboundQueue) {
+    public ProcessingMetrics(MeterRegistry registry, RabbitAdmin rabbitAdmin, 
+            @Qualifier("asnHighPriorityQueue") Queue inboundQueue) {
         this.registry = registry;
         this.timers = new ProcessingTimers(registry);
         this.counters = new ProcessingCounters(registry);
@@ -189,7 +191,7 @@ public class ProcessingMetrics {
         private final MeterRegistry meterRegistry;
         private final Queue inboundQueue;
         
-        public QueueMetrics(MeterRegistry meterRegistry, RabbitAdmin rabbitAdmin, Queue inboundQueue) {
+        public QueueMetrics(MeterRegistry meterRegistry, RabbitAdmin rabbitAdmin, @Qualifier("asnHighPriorityQueue") Queue inboundQueue) {
             this.rabbitAdmin = rabbitAdmin;
             this.meterRegistry = meterRegistry;
             this.inboundQueue = inboundQueue;
