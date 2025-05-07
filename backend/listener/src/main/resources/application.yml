@@ -1,0 +1,59 @@
+# Server Configuration
+server:
+  port: 8081
+
+spring:
+  application:
+    name: listener
+  main:
+    allow-bean-definition-overriding: true
+  profiles:
+    include: shared
+  jpa:
+    properties:
+      hibernate:
+        session:
+          events:
+            log: true
+        current_session_context_class: thread
+    open-in-view: false
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    connection-timeout: 10000
+    requested-heartbeat: 60
+    publisher-confirms: true
+    publisher-returns: true
+    template:
+      mandatory: true
+      retry:
+        enabled: true
+        max-attempts: 3
+        initial-interval: 1000
+        multiplier: 2.0
+        max-interval: 10000
+
+# Service-specific Logging
+logging:
+  level:
+    root: INFO
+    com.middleware: DEBUG
+    com.middleware.listener: DEBUG
+    com.middleware.shared.security: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.apache.camel: INFO
+    org.apache.camel.component.sftp: TRACE
+    org.apache.camel.support.DefaultComponent: DEBUG
+    com.middleware.listener.connectors.sftp: TRACE
+    com.middleware.listener.connectors.sftp.config.SftpCamelConfig: DEBUG
+    com.jcraft.jsch: TRACE
+    com.jcraft.jsch.Session: DEBUG
+    com.jcraft.jsch.Channel: DEBUG
+    com.jcraft.jsch.ChannelSftp: DEBUG
+    org.apache.camel.component.file.remote: TRACE
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE

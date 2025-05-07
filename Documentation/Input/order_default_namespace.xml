@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Order xmlns="http://www.example.com/order">
+  <OrderHeader>
+    <OrderNumber>ORD-12345</OrderNumber>
+    <OrderDate>2025-04-25</OrderDate>
+    <CustomerID>CUST-789</CustomerID>
+    <ShippingAddress>
+      <Name>John Doe</Name>
+      <Street>123 Main St</Street>
+      <City>Anytown</City>
+      <State>CA</State>
+      <ZipCode>90210</ZipCode>
+      <Country>USA</Country>
+    </ShippingAddress>
+    <BillingAddress>
+      <Name>John Doe</Name>
+      <Street>123 Main St</Street>
+      <City>Anytown</City>
+      <State>CA</State>
+      <ZipCode>90210</ZipCode>
+      <Country>USA</Country>
+    </BillingAddress>
+  </OrderHeader>
+  <OrderLines>
+    <OrderLine>
+      <LineNumber>1</LineNumber>
+      <ProductID>PROD-001</ProductID>
+      <ProductName>Laptop Computer</ProductName>
+      <Quantity>2</Quantity>
+      <UnitPrice>1299.99</UnitPrice>
+      <LineTotal>2599.98</LineTotal>
+    </OrderLine>
+    <OrderLine>
+      <LineNumber>2</LineNumber>
+      <ProductID>PROD-002</ProductID>
+      <ProductName>Wireless Mouse</ProductName>
+      <Quantity>3</Quantity>
+      <UnitPrice>29.99</UnitPrice>
+      <LineTotal>89.97</LineTotal>
+    </OrderLine>
+  </OrderLines>
+  <OrderTotal>2689.95</OrderTotal>
+</Order>

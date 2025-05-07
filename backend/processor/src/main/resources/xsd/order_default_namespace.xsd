@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://www.example.com/order"
+           targetNamespace="http://www.example.com/order"
+           elementFormDefault="qualified">
+
+  <xs:element name="Order">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="OrderHeader">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="OrderNumber" type="xs:string"/>
+              <xs:element name="OrderDate" type="xs:date"/>
+              <xs:element name="CustomerID" type="xs:string"/>
+              <xs:element name="ShippingAddress" type="AddressType"/>
+              <xs:element name="BillingAddress" type="AddressType"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="OrderLines">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="OrderLine" type="OrderLineType" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="OrderTotal" type="xs:decimal"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="AddressType">
+    <xs:sequence>
+      <xs:element name="Name" type="xs:string"/>
+      <xs:element name="Street" type="xs:string"/>
+      <xs:element name="City" type="xs:string"/>
+      <xs:element name="State" type="xs:string"/>
+      <xs:element name="ZipCode" type="xs:string"/>
+      <xs:element name="Country" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="OrderLineType">
+    <xs:sequence>
+      <xs:element name="LineNumber" type="xs:integer"/>
+      <xs:element name="ProductID" type="xs:string"/>
+      <xs:element name="ProductName" type="xs:string"/>
+      <xs:element name="Quantity" type="xs:integer"/>
+      <xs:element name="UnitPrice" type="xs:decimal"/>
+      <xs:element name="LineTotal" type="xs:decimal"/>
+    </xs:sequence>
+  </xs:complexType>
+
+</xs:schema>

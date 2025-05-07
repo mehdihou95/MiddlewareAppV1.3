@@ -1,0 +1,68 @@
+﻿COLUMN_NAME;DATA_TYPE;NULLABLE;DATA_DEFAULT;COMMENTS
+ITEM_ID;NUMBER(9,0);Yes;;ITEM ID of the PO Line Item
+ITEM_NAME;VARCHAR2(100 CHAR);Yes;;Displayed unique identifier for the PO Line Item ITEM
+ITEM_ATTR_1;VARCHAR2(10 CHAR);Yes;;Inventory attributes - user defined for each company
+ITEM_ATTR_2;VARCHAR2(10 CHAR);Yes;;Inventory attributes - user defined for each company
+ITEM_ATTR_3;VARCHAR2(10 CHAR);Yes;;Inventory attributes - ex Expiration/Mfg Date
+ITEM_ATTR_4;VARCHAR2(10 CHAR);Yes;;Inventory attributes - user defined for each company
+ITEM_ATTR_5;VARCHAR2(10 CHAR);Yes;;Inventory attributes -
+PACKAGE_TYPE_ID;NUMBER(8,0);Yes;;Reference (logical, no FK) to PACKAGE_TYPE
+PACKAGE_TYPE_DESC;VARCHAR2(50 CHAR);Yes;;User identifier for the line item package type
+PACKAGE_TYPE_INSTANCE;VARCHAR2(100 CHAR);Yes;;Package Type Instance
+EPC_TRACKING_RFID_VALUE;VARCHAR2(32 CHAR);Yes;;Tracking Number for RFID
+GTIN;VARCHAR2(25 CHAR);Yes;;GTIN for this ASN line.
+SHIPPED_QTY;NUMBER(16,4);Yes;;Shipped qty on this ASN line.
+STD_PACK_QTY;NUMBER(13,4);Yes;0;Standard pack qty size for this ASN line.
+STD_CASE_QTY;NUMBER(16,4);Yes;;Standard case qty size for this ASN line.
+ASN_DETAIL_STATUS;NUMBER(3,0);No;4;ASN detail status.
+STD_SUB_PACK_QTY;NUMBER(13,4);Yes;0;Standard quantity associated with ITEM on shipment. Added for ILS integration
+LPN_PER_TIER;NUMBER(5,0);Yes;;The number of standard cartons per pallet tier for the item. Added for ILS integration
+TIER_PER_PALLET;NUMBER(5,0);Yes;;The number of tiers on a pallet for the item. Added for ILS Integration
+MFG_PLNT;VARCHAR2(3 CHAR);Yes;;Manufacturing facility for this asn_detail. Added for ILS
+MFG_DATE;DATE;Yes;;manufacturing dttm for this ASN detail. Added for ILS
+SHIP_BY_DATE;DATE;Yes;;Ship By date to be applied to all cased received against this ITEM. Added for ILS Integration
+EXPIRE_DATE;DATE;Yes;;Expiration Date to be applied to all cased received against this ITEM. Added for ILS Integration
+WEIGHT_UOM_ID_BASE;NUMBER(9,0);Yes;;WM Specific Total Weight UOM. Added for ILS Integration
+IS_CANCELLED;NUMBER(1,0);No;0;Is Cancelled?
+INVN_TYPE;VARCHAR2(1 CHAR);Yes;;Inventory Type
+PROD_STAT;VARCHAR2(3 CHAR);Yes;;Product Status
+CNTRY_OF_ORGN;VARCHAR2(4 CHAR);Yes;;Country of Origin
+SHIPPED_LPN_COUNT;NUMBER(9,0);Yes;;Shipped LPN Count
+UNITS_ASSIGNED_TO_LPN;NUMBER(16,4);Yes;;Units assigned to LPN
+PROC_IMMD_NEEDS;VARCHAR2(1 CHAR);Yes;;Process Immediate Needs?
+QUALITY_CHECK_HOLD_UPON_RCPT;VARCHAR2(1 CHAR);Yes;;Quality Hold Upon Receipt?
+REFERENCE_ORDER_NBR;VARCHAR2(12 CHAR);Yes;;Reference Order Number
+ACTUAL_WEIGHT;NUMBER(13,4);Yes;;Actual Weight
+ACTUAL_WEIGHT_PACK_COUNT;NUMBER(13,4);Yes;;Actual Weight Pack Count
+NBR_OF_PACK_FOR_CATCH_WT;NUMBER(13,4);Yes;;Number of Packs for Catch Weight
+RETAIL_PRICE;NUMBER(16,4);Yes;;Retail Price
+CREATED_SOURCE_TYPE;NUMBER(2,0);No;1;Created Source type
+CREATED_SOURCE;VARCHAR2(50 CHAR);Yes;;Created source
+LAST_UPDATED_SOURCE_TYPE;NUMBER(2,0);No;1;Last Updated Source Type
+LAST_UPDATED_SOURCE;VARCHAR2(50 CHAR);Yes;;Last Updated Source
+HIBERNATE_VERSION;NUMBER(10,0);Yes;;Hibernate version
+CUT_NBR;VARCHAR2(12 CHAR);Yes;;Cut Number
+QTY_CONV_FACTOR;NUMBER(17,8);No;1;Will be used to store the conversion factor between base and display qty uom
+QTY_UOM_ID;NUMBER(12,0);Yes;;Display Quantity UOM ID if different from company size UOM setup
+WEIGHT_UOM_ID;NUMBER(9,0);Yes;;Display weight UOM ID if different from company size UOM setup
+QTY_UOM_ID_BASE;NUMBER(9,0);Yes;;Master Order Size UOM ID
+EXP_RECEIVE_CONDITION_CODE;VARCHAR2(10 CHAR);Yes;;Expected Receiving Condition Code
+ASN_RECV_RULES;VARCHAR2(200 CHAR);Yes;;Maintains the rules that are executed on an ASN line
+REF_FIELD_1;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 4. Reserved for custom use
+REF_FIELD_2;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 5. Reserved for custom use
+REF_FIELD_3;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 6. Reserved for custom use
+REF_FIELD_4;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 4. Reserved for custom use
+REF_FIELD_5;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 5. Reserved for custom use
+REF_FIELD_6;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 6. Reserved for custom use
+REF_FIELD_7;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 7. Reserved for custom use
+REF_FIELD_8;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 8. Reserved for custom use
+REF_FIELD_9;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 9. Reserved for custom use
+REF_FIELD_10;VARCHAR2(25 CHAR);Yes;;Stores the Reference Field 10. Reserved for custom use
+REF_NUM1;NUMBER(13,5);Yes;;Stores the Reference Number 1. Reserved for custom use
+REF_NUM2;NUMBER(13,5);Yes;;Stores the Reference Number 2. Reserved for custom use
+REF_NUM3;NUMBER(13,5);Yes;;Stores the Reference Number 3. Reserved for custom use
+REF_NUM4;NUMBER(13,5);Yes;;Stores the Reference Number 4. Reserved for custom use
+REF_NUM5;NUMBER(13,5);Yes;;Stores the Reference Number 5. Reserved for custom use
+DISPOSITION_TYPE;VARCHAR2(3 CHAR);Yes;;Indicates the ASN's pre-receipt disposition code.
+INV_DISPOSITION;VARCHAR2(15 CHAR);Yes;;Used to Track the  Dispositioned Inventory
+PURCHASE_ORDERS_LINE_ITEM_ID;NUMBER(10,0);Yes;;

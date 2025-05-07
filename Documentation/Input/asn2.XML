@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ROOT xsi:noNamespaceSchemaLocation="schema.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <HEADER>
+    <ORIGIN>string</ORIGIN>
+    <CUSTOMERRETURN>109837380</CUSTOMERRETURN>
+    <PROTOCOLNUMBER>4621</PROTOCOLNUMBER>
+    <RECEPTIONDATE>10092021</RECEPTIONDATE>
+    <OBSERVATION>string</OBSERVATION>
+  </HEADER>
+  <ITEM>
+    <CODE>1530</CODE>
+    <UNITS>121</UNITS>
+    <CAUSE>string</CAUSE>
+    <BATCH>string</BATCH>
+  </ITEM>
+  <ITEM>
+    <CODE>1965</CODE>
+    <UNITS>6</UNITS>
+    <CAUSE>string</CAUSE>
+    <BATCH>string</BATCH>
+  </ITEM>
+  <ITEM>
+    <CODE>373</CODE>
+    <UNITS>6</UNITS>
+    <CAUSE>string</CAUSE>
+    <BATCH>string</BATCH>
+  </ITEM>
+</ROOT>

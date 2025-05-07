@@ -1,0 +1,139 @@
+# Server Configuration
+server:
+  port: 8081
+  servlet:
+    context-path: /api
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  profiles:
+    include: shared
+  # File Upload Configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: /
+    queue:
+      inbound:
+        processor: inbound.processor
+    prefetch:
+      count: 30
+    concurrent:
+      consumers: 3
+    max:
+      concurrent:
+        consumers: 10
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000
+          multiplier: 2.0
+          max-interval: 10000
+    connection-factory:
+      concurrent-consumers: 3
+      max-concurrent-consumers: 10
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    database: 0
+    timeout: 5000
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1
+  datasource:
+    url: jdbc:h2:file:./data/middleware;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        generate_statistics: true
+        format_sql: true
+
+# Processor-specific Logging
+logging:
+  level:
+    com.middleware.processor: DEBUG
+    com.middleware.processor.service: DEBUG
+    com.middleware.processor.service.impl: DEBUG
+    com.middleware.processor.service.strategy: DEBUG
+    org.springframework.web.multipart: DEBUG
+    org.springframework.transaction: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+    javax.xml.validation: TRACE
+    org.xml.sax: TRACE
+
+# XML Validation Configuration
+xml:
+  validation:
+    entity-expansion-limit: ${XML_ENTITY_EXPANSION_LIMIT:0}
+    honour-all-schema-locations: true
+    enable-external-dtd: false
+    enable-external-schema: false
+    enable-schema-full-checking: false
+    max-memory-size: 10485760
+
+# SFTP Configuration
+sftp:
+  root: ${SFTP_ROOT:/sftp_root}
+
+# Batch Processing Configuration
+batch:
+  size:
+    min: 10
+    max: 100
+    default: 50
+  processing:
+    timeout: 300000
+    retry-attempts: 3
+    retry-delay: 5000
+
+# Cache Configuration
+cache:
+  validation:
+    ttl: 3600
+    max-size: 10000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+
+file:
+  storage:
+    directory: ./data/files
+    max-size: 10485760
+    allowed-extensions: xml,json,txt
+    compression:
+      enabled: true
+      level: 6 

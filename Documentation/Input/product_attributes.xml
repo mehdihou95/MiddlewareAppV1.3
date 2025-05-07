@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Product id="PROD-12345" sku="SKU-12345-XYZ" createdDate="2025-04-25" lastModified="2025-04-25T10:30:00">
+  <ProductID>PROD-12345</ProductID>
+  <ProductName>Ultra HD Smart Television</ProductName>
+  <Category>Electronics</Category>
+  <Specifications weight="15.5" height="65.2" width="112.8" depth="8.3" color="Black" material="Metal/Glass"/>
+  <Pricing basePrice="1299.99" discount="200.00" currency="USD" taxRate="8.25"/>
+  <Inventory inStock="true" quantity="42" warehouse="CENTRAL-WH-01" reorderLevel="10"/>
+</Product>

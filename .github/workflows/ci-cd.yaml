@@ -1,0 +1,107 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Test Backend Processor
+      run: |
+        cd backend/processor
+        mvn test
+    
+    - name: Test Backend Listener
+      run: |
+        cd backend/listener
+        mvn test
+    
+    - name: Test Backend Dispatcher
+      run: |
+        cd backend/dispatcher
+        mvn test
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+    
+    - name: Build and Push Backend Images
+      run: |
+        docker-compose build
+        docker-compose push
+
+  deploy-dev:
+    needs: build
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+    
+    - name: Deploy to Dev
+      run: |
+        echo "${{ secrets.KUBE_CONFIG_DEV }}" > kubeconfig.yaml
+        export KUBECONFIG=kubeconfig.yaml
+        kubectl apply -f k8s/
+
+  deploy-prod:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+    
+    - name: Deploy to Production
+      run: |
+        echo "${{ secrets.KUBE_CONFIG_PROD }}" > kubeconfig.yaml
+        export KUBECONFIG=kubeconfig.yaml
+        kubectl apply -f k8s/
+
+  monitoring:
+    needs: [deploy-dev, deploy-prod]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check Deployment Health
+      run: |
+        curl -X POST ${{ secrets.MONITORING_WEBHOOK }}
+        
+    - name: Update Grafana Dashboard
+      run: |
+        curl -X POST ${{ secrets.GRAFANA_API }}/api/dashboards/db \
+          -H "Authorization: Bearer ${{ secrets.GRAFANA_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          --data @monitoring/dashboards/overview.json 

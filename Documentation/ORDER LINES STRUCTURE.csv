@@ -1,0 +1,197 @@
+﻿COLUMN_NAME;DATA_TYPE;NULLABLE;DATA_DEFAULT;COMMENTS
+LINE_ID;NUMBER(10,0);No;1;PK2,  Sequence Generated)
+ORDER_ID;NUMBER(10,0);No;;1;Primary Key of the Order Header
+CLIENT_ID;NUMBER(9,0);No;2;PK1, FK Reference to CLIENTS
+LINE_ITEM_ID;NUMBER(10,0);No;;2;Order line number
+PARENT_LINE_ITEM_ID;NUMBER(10,0);Yes;;3;Parent Line item id - Combination of order number and line number - if the original order line is split due to ITEM substitution or date changes a order line will get created and this column will reference the original line.
+COMMODITY_CLASS;VARCHAR2(10 CHAR);Yes;;5;Commodity class (freight class)
+REF_FIELD1;VARCHAR2(25 CHAR);Yes;;6;Reference identifier
+REF_FIELD2;VARCHAR2(25 CHAR);Yes;;7;Reference identifier
+REF_FIELD3;VARCHAR2(25 CHAR);Yes;;8;Reference identifier
+EXT_SYS_LINE_ITEM_ID;VARCHAR2(25 CHAR);Yes;;9;External system line item ID
+MASTER_ORDER_ID;NUMBER(10,0);Yes;;10;Master Order ID
+MO_LINE_ITEM_ID;NUMBER(12,0);Yes;;11;Master order line number
+IS_HAZMAT;NUMBER(1,0);No;0 ;12;Is hazardous material
+IS_STACKABLE;NUMBER(1,0);No;0 ;13;Is stackable
+HAS_ERRORS;NUMBER(1,0);No;0 ;14;true if the order line has some errors
+ORIG_BUDG_COST;NUMBER(13,4);Yes;;15;Original Budgeted Cost - Transportation cost
+BUDG_COST_CURRENCY_CODE;VARCHAR2(3 CHAR);Yes;;16;Budgeted Cost Currency Code
+BUDG_COST;NUMBER(13,4);Yes;;17;Budgeted Cost
+ACTUAL_COST_CURRENCY_CODE;VARCHAR2(3 CHAR);Yes;;18;Actual Cost Currency Code
+TOTAL_MONETARY_VALUE;NUMBER(13,4);Yes;;19;Total Monetary Value
+UNIT_MONETARY_VALUE;NUMBER(13,4);Yes;;20;Unit Monetary Value
+UNIT_TAX_AMOUNT;NUMBER(16,4);Yes;;21;Unit tax amount - added for CML
+RTS_ID;NUMBER(10,0);Yes;;22;RTS ID
+RTS_LINE_ITEM_ID;NUMBER(10,0);Yes;;23;Identifies the RTS for the line item
+STD_PACK_QTY;NUMBER(13,4);Yes;0;24;Standard Pack quantity - if not entered defaulted from item package
+PRODUCT_CLASS_ID;NUMBER(8,0);Yes;;25;Product Class Id
+PROTECTION_LEVEL_ID;NUMBER(8,0);Yes;;26;Protection Level Id
+PACKAGE_TYPE_ID;NUMBER(8,0);Yes;;27;Reference to package type
+COMMODITY_CODE_ID;NUMBER(12,0);Yes;;28;Commodity code ID
+MV_SIZE_UOM_ID;NUMBER(8,0);Yes;;29;Monetary Value Size UOM
+QTY_UOM_ID_BASE;NUMBER(9,0);Yes;;30;Master Order Size UOM ID
+MV_CURRENCY_CODE;VARCHAR2(3 CHAR);Yes;;31;Monetary value currency code
+SHIPPED_QTY;NUMBER(13,4);Yes;;32;Quantity shipped from the origin facility
+RECEIVED_QTY;NUMBER(13,4);Yes;;33;Qty received at the destination
+PRIORITY;NUMBER(10,0);Yes;;34;Priority of the order
+MERCHANDIZING_DEPARTMENT_ID;NUMBER(10,0);Yes;;35;Merchandizing Dept
+UN_NUMBER_ID;NUMBER(12,0);Yes;;36;UN number ID
+PICKUP_REFERENCE_NUMBER;VARCHAR2(30 CHAR);Yes;;37;Pickup reference number
+DELIVERY_REFERENCE_NUMBER;VARCHAR2(40 CHAR);Yes;;38;Delivery Reference Number
+CNTRY_OF_ORGN;VARCHAR2(4 CHAR);Yes;;39;Inventory attributes - user defined for each company
+PROD_STAT;VARCHAR2(3 CHAR);Yes;;40;Inventory attributes - user defined for each company- e.g. Inventory Type
+STACK_RANK;NUMBER(4,0);Yes;;41;Stackability rank
+STACK_LENGTH_VALUE;NUMBER(16,4);Yes;;42;Stackability dimension value (length)
+STACK_LENGTH_STANDARD_UOM;NUMBER(8,0);Yes;;43;Stack Length UOM
+STACK_WIDTH_VALUE;NUMBER(16,4);Yes;;44;Stackability dimension value (width)
+STACK_WIDTH_STANDARD_UOM;NUMBER(8,0);Yes;;45;Stack Width UOM
+STACK_HEIGHT_VALUE;NUMBER(16,4);Yes;;46;Stackability dimension value (height)
+STACK_HEIGHT_STANDARD_UOM;NUMBER(8,0);Yes;;47;Stack Height UOM
+STACK_DIAMETER_VALUE;NUMBER(16,4);Yes;;48;Stackability diameter value
+STACK_DIAMETER_STANDARD_UOM;NUMBER(8,0);Yes;;49;Stack Diameter UOM
+CREATED_SOURCE_TYPE;NUMBER(2,0);No;1 ;50;Created by source type
+CREATED_SOURCE;VARCHAR2(50 CHAR);Yes;;51;Created by source
+CREATED_DTTM;TIMESTAMP(6);No;SYSTIMESTAMP ;52;Created Date
+LAST_UPDATED_SOURCE_TYPE;NUMBER(2,0);No;1 ;53;Last Updated Source Type - Audit field
+LAST_UPDATED_SOURCE;VARCHAR2(50 CHAR);Yes;;54;Last Updated Source - Audit field
+LAST_UPDATED_DTTM;TIMESTAMP(6);No;SYSTIMESTAMP ;55;Last updated date
+HIBERNATE_VERSION;NUMBER;Yes;;56;Hibernate Version
+CUBE_MULTIPLE_QTY;NUMBER(13,4);Yes;;57;Defines the increment which an item should be cubed into an LPN
+DO_DTL_STATUS;NUMBER(4,0);Yes;;58;Line Item status
+INTERNAL_ORDER_SEQ_NBR;NUMBER(9,0);Yes;;59;Pickticket Sequence Number
+IS_EMERGENCY;VARCHAR2(16 CHAR);Yes;;60;Not used by WM
+LPN_SIZE;NUMBER(16,4);Yes;;61;LPN Size
+MANUFACTURING_DTTM;DATE;Yes;;62;Manufacturing Date
+ORDER_LINE_ID;NUMBER(10,0);Yes;;63;Reference to the Original distribution order in orders table
+PACK_RATE;NUMBER(13,4);Yes;;64;Used during Pack Wave
+ALLOCATED_QTY;NUMBER(13,4);No;0 ;65;Allocated Quantity
+PLANNED_SHIP_DATE;DATE;Yes;;66;"Planned Ship Date; Used for inventory planning"
+PPACK_QTY;NUMBER(13,4);No;0 ;67;Quantity inside a Prepack. Number of prepacks is derived by dividing the order qty by the Prepack qty.
+STD_BUNDLE_QTY;NUMBER(13,4);Yes;;68;Standard Bundle Quantity
+STD_LPN_QTY;NUMBER(13,4);Yes;;69;Standard Case Quantity Defined at the Item Master level. It defines the number of items packed in an LPN
+STD_LPN_VOL;NUMBER(13,4);Yes;;70;Defines the LPN volume for a full LPN pull from reserve
+STD_LPN_WT;NUMBER(13,4);Yes;;71;Defines the LPN weight for a full LPN pull from reserve
+UNIT_COST;NUMBER(16,4);Yes;;72;"Unit Cost; Used for information/display"
+UNIT_PRICE_AMOUNT;NUMBER(13,4);Yes;;73;Monetary value is for the whole line. This is a per unit attribute that overrides value from Item Master.
+UNIT_VOL;NUMBER(13,4);Yes;;74;Unit volume, used in cubing
+UNIT_WT;NUMBER(13,4);Yes;;75;Unit weight, used in cubing
+USER_CANCELED_QTY;NUMBER(13,4);Yes;;76;Updated if the order/order line is cancelled
+DELIVERY_END_DTTM;DATE;Yes;;78;Delivery end date
+DELIVERY_START_DTTM;DATE;Yes;;79;Delivery start date
+EVENT_CODE;VARCHAR2(10 CHAR);Yes;;80;Defines whether the line is included in a special event (e.g.., grand opening or sale). Retail Routing uses this to override normal retail routing rules. Instead, all LPNs associated with an Order Line with a given Event Code will be routed together
+REASON_CODE;VARCHAR2(2 CHAR);Yes;;81;Reason code used by Wave
+EXP_INFO_CODE;VARCHAR2(2 CHAR);Yes;;82;Indicates the reporting requirements and/or exemption from reporting for the electronic Shipper-s Export Declaration. Pulls from system code S 459.
+PARTL_FILL;VARCHAR2(1 CHAR);Yes;;83;When set to yes, substitution for part of the requirement will be allowed - i.e. if 10 units of item are required and only 5 are found, this flag determines if item substitution can be attempted for the remaining 5
+LINE_TYPE;VARCHAR2(1 CHAR);Yes;;84;Updated by Warehouse Management to describe if the item is to be picked from active or case pick
+REPL_PROC_TYPE;NUMBER(4,0);Yes;;85;Indicates the replenishment processing type for an Item for WMS processing
+ORDER_QTY;NUMBER(13,4);Yes;;86;Order Quantity
+ORIG_ORDER_QTY;NUMBER(13,4);Yes;;87;Original Order Qty
+RTL_TO_BE_DISTROED_QTY;NUMBER(9,2);Yes;;88;Retail To Be order Qty. Retail - quantity of this item that will be processed using a Put To Store location
+PRICE;NUMBER(13,4);Yes;;89;Actual price of item, only for informational use
+RETAIL_PRICE;NUMBER(16,4);Yes;;90;Price the manufacturer recommends that the retailer sell it for MSRP
+UNITS_PAKD;NUMBER(13,4);Yes;;91;Updated during packing
+MINOR_ORDER_NBR;VARCHAR2(10 CHAR);Yes;;92;Internal order number of the original minor order. This value is populated only if the DO line is associated with a major order.
+ITEM_ID;NUMBER(9,0);Yes;;93;Identifies the item
+TC_ORDER_LINE_ID;VARCHAR2(30 CHAR);No;;94;Line Item identification
+ACTUAL_SHIPPED_DTTM;DATE;Yes;;95;Actual Shipped DTTM
+QTY_UOM_ID;NUMBER(12,0);Yes;;96;Display Quantity UOM ID if different from company size UOM setup
+PICKUP_END_DTTM;DATE;Yes;;97;Pickup end date time
+PURCHASE_ORDER_LINE_NUMBER;VARCHAR2(30 CHAR);Yes;;98;Refers to the PO/SO line from which the DO Line was built
+PICKUP_START_DTTM;DATE;Yes;;99;Pickup start date time
+REFERENCE_LINE_ITEM_ID;NUMBER(12,0);Yes;;100;Used by WM in aggregation
+REFERENCE_ORDER_ID;NUMBER(12,0);Yes;;101;Used by WM in aggregation
+REPL_WAVE_RUN;VARCHAR2(1 CHAR);Yes;;102;Replenishment Wave run - Identifies the orders selected as part of a Replenishment Wave
+STD_PALLET_QTY;NUMBER(13,4);Yes;;103;Standard pallet quantity of ITEM if not populated defaults from item master. Overrides the item master value if populated
+STD_SUB_PACK_QTY;NUMBER(13,4);Yes;0;104;Standard quantity associated with ITEM on shipment. Added for ILS integration
+STORE_DEPT;VARCHAR2(12 CHAR);Yes;;105;Free Text Field indicating Store Department used by DOM to flow through to WM during Release
+ALLOC_TYPE;VARCHAR2(3 CHAR);Yes;;106;Defines where inventory should be allocated from in the warehouse.
+BATCH_NBR;VARCHAR2(20 CHAR);Yes;;107;Batch Number
+BATCH_REQUIREMENT_TYPE;VARCHAR2(4 CHAR);Yes;;108;Describes how to fulfill Pickticket Requirements when dealing with batches
+CHUTE_ASSIGN_TYPE;VARCHAR2(3 CHAR);Yes;;109;Chute Assignment Type (B693)
+CUSTOM_TAG;VARCHAR2(8 CHAR);Yes;;110;Reserved for custom use
+CUSTOMER_ITEM;VARCHAR2(30 CHAR);Yes;;111;The customer identification of the Item. Used to print on labels.
+INTERNAL_ORDER_ID;VARCHAR2(30 CHAR);Yes;;112;Internal Order ID
+INVN_TYPE;VARCHAR2(1 CHAR);Yes;;113;Inventory attributes - user defined for each company- e.g. Country of origin
+ITEM_ATTR_1;VARCHAR2(10 CHAR);Yes;;114;Item Attribute 1
+ITEM_ATTR_2;VARCHAR2(10 CHAR);Yes;;115;Item Attribute 2
+ITEM_ATTR_3;VARCHAR2(10 CHAR);Yes;;116;Item Attribute 3
+ITEM_ATTR_4;VARCHAR2(10 CHAR);Yes;;117;Item Attribute 4
+ITEM_ATTR_5;VARCHAR2(10 CHAR);Yes;;118;Item Attribute 5
+LPN_BRK_ATTRIB;VARCHAR2(3 CHAR);Yes;;119;Warehouse Management only assigns items with the same value into the same LPN
+MERCH_GRP;VARCHAR2(3 CHAR);Yes;;120;Merchandise Group
+MERCH_TYPE;VARCHAR2(3 CHAR);Yes;;121;Free Text Field indicating Merchandise Type used by DOM to flow through to WM during Release
+PPACK_GRP_CODE;VARCHAR2(8 CHAR);Yes;;126;Prepack Group Code - all line items with the same Prepack code belong to the specific Prepack
+PRICE_TKT_TYPE;VARCHAR2(3 CHAR);Yes;;127;Price ticket template for the associated item (B901). Defaulted initially from Order detail, Item, or Warehouse Master.
+SERIAL_NUMBER_REQUIRED_FLAG;VARCHAR2(1 CHAR);Yes;;128;Defines if Warehouse Management prompts the user for serial number during picking
+ITEM_GTIN;VARCHAR2(25 CHAR);Yes;;129;Item GTIN code
+ITEM_SUB_CODE_ID;VARCHAR2(3 CHAR);Yes;;130;ITEM Substitution Code id
+ITEM_SUB_CODE_VALUE;VARCHAR2(20 CHAR);Yes;;131;ITEM Substitution Code Value
+VAS_PROCESS_TYPE;VARCHAR2(4 CHAR);Yes;;132;VAS Process Type: Indicates whether, and how, VAS must be performed upon the item in this detail. Based on sys code S257
+SUBSTITUTED_PARENT_LINE_ID;NUMBER(10,0);Yes;;133;Used in Order Aggregation
+IS_CANCELLED;VARCHAR2(1 CHAR);Yes;;134;Is cancelled flag - flag indicating if the order is cancelled
+ITEM_NAME;VARCHAR2(100 CHAR);Yes;;135;Name of Item on Order line item
+SHELF_DAYS;NUMBER(8,0);Yes;;140;Shelf Days - Used to determine if an item can be allocated or not depending on the expiration date shelf days and ship date. Used by WM and TPM (potentially DOM?)
+SINGLE_UNIT_FLAG;VARCHAR2(1 CHAR);Yes;;145;Identifies a single unit order
+ACTUAL_COST;NUMBER(13,4);Yes;;146;Actual Cost - transportation cost
+QTY_CONV_FACTOR;NUMBER(17,8);No;1 ;147;Will be used to store the conversion factor between base and display qty mom
+PLANNED_WEIGHT;NUMBER(13,4);Yes;;148;Weight value as per companys weight UOM
+RECEIVED_WEIGHT;NUMBER(13,4);Yes;;149;Received Weight value as per companys weight UOM
+SHIPPED_WEIGHT;NUMBER(13,4);Yes;;150;Shipped Weight value as per companys weight UOM
+WEIGHT_UOM_ID_BASE;NUMBER(9,0);Yes;;151;Weight UOM ID from company size UOM setup
+WEIGHT_UOM_ID;NUMBER(9,0);Yes;;152;Display weight UOM ID if different from company size UOM setup
+PLANNED_VOLUME;NUMBER(13,4);Yes;;153;Volume value as per companys Volume UOM
+RECEIVED_VOLUME;NUMBER(13,4);Yes;;154;Received Volume value as per companys Volume UOM
+SHIPPED_VOLUME;NUMBER(13,4);Yes;;155;Shipped Volume value as per companys Volume UOM
+VOLUME_UOM_ID_BASE;NUMBER(9,0);Yes;;156;Volume UOM ID from company size UOM setup for storing the volume related values
+VOLUME_UOM_ID;NUMBER(9,0);Yes;;157;Display Volume UOM ID if different from company size UOM setup
+SIZE1_UOM_ID;NUMBER(9,0);Yes;;158;Size value for Size 1 UOM
+SIZE1_VALUE;NUMBER(13,4);Yes;;159;Size value as per companys Size 1 UOM
+RECEIVED_SIZE1;NUMBER(13,4);Yes;;160;Received size value for companys size 1 UOM
+SHIPPED_SIZE1;NUMBER(13,4);Yes;;161;Shipped size value for companys size 1 UOM
+SIZE2_UOM_ID;NUMBER(9,0);Yes;;162;Size value for Size 2 UOM
+SIZE2_VALUE;NUMBER(13,4);Yes;;163;Size value as per companys Size 2 UOM
+RECEIVED_SIZE2;NUMBER(13,4);Yes;;164;Received size value for companys size 2 UOM
+SHIPPED_SIZE2;NUMBER(13,4);Yes;;165;Shipped size value for companys size 2 UOM
+LPN_TYPE;VARCHAR2(3 CHAR);Yes;;166;Used for updated in cubing, defines the characteristics of cartons.
+ORDER_CONSOL_ATTR;VARCHAR2(3 CHAR);Yes;;167;This is a user definable attribute at the order detail level that defines what portions of a order can be consolidated together.
+ITEM_BREAK_ATTR;VARCHAR2(15 CHAR);Yes;;168;When converting distros to order details in the wave process, distros for the same store/ITEM/attributes/etc will be combined onto the same order detail line only if this value is the same or blank.
+PURCHASE_ORDER_NUMBER;VARCHAR2(50 CHAR);Yes;;169;Field specific to DOM to support single DO associated with an SO
+EXT_PURCHASE_ORDER;VARCHAR2(50 CHAR);Yes;;170;External PO reference at the line level to accommodate lines to reference lines from different external POs
+CRITCL_DIM_1;NUMBER(7,2);Yes;;171;Defines length, width, height for cubing
+CRITCL_DIM_2;NUMBER(7,2);Yes;;172;Defines length, width, height for cubing
+CRITCL_DIM_3;NUMBER(7,2);Yes;;173;Defines length, width, height for cubing
+ASSORT_NBR;VARCHAR2(12 CHAR);Yes;;174;Assortment Number
+DESCRIPTION;VARCHAR2(100 CHAR);Yes;;175;Not used by WM
+ORIGINAL_ORDERED_ITEM_ID;NUMBER(9,0);Yes;;176;Original Ordered Item
+SUBSTITUTION_TYPE;VARCHAR2(50 CHAR);Yes;;177;Item Substitution Type
+BACK_ORD_REASON;VARCHAR2(2 CHAR);Yes;;178;Identifies the source of the back order
+FREIGHT_REVENUE_CURRENCY_CODE;VARCHAR2(3 CHAR);Yes;;179;Freight Revenue urrency code
+FREIGHT_REVENUE;NUMBER(13,4);Yes;;180;Freight Revenue
+IS_CHASE_CREATED_LINE;NUMBER(1,0);Yes;0;181;Indicates whether the order line was created as a result of chase wave execution
+REF_FIELD4;VARCHAR2(25 CHAR);Yes;;182;Stores the Reference Field 4. Reserved for custom use
+REF_FIELD5;VARCHAR2(25 CHAR);Yes;;183;Stores the Reference Field 5. Reserved for custom use
+REF_FIELD6;VARCHAR2(25 CHAR);Yes;;184;Stores the Reference Field 6. Reserved for custom use
+REF_FIELD7;VARCHAR2(25 CHAR);Yes;;185;Stores the Reference Field 7. Reserved for custom use
+REF_FIELD8;VARCHAR2(25 CHAR);Yes;;186;Stores the Reference Field 8. Reserved for custom use
+REF_FIELD9;VARCHAR2(25 CHAR);Yes;;187;Stores the Reference Field 9. Reserved for custom use
+REF_FIELD10;VARCHAR2(25 CHAR);Yes;;188;Stores the Reference Field 10. Reserved for custom use
+REF_NUM1;NUMBER(13,5);Yes;;189;Stores the Reference Number 1. Reserved for custom use
+REF_NUM2;NUMBER(13,5);Yes;;190;Stores the Reference Number 2. Reserved for custom use
+REF_NUM3;NUMBER(13,5);Yes;;191;Stores the Reference Number 3. Reserved for custom use
+REF_NUM4;NUMBER(13,5);Yes;;192;Stores the Reference Number 4. Reserved for custom use
+REF_NUM5;NUMBER(13,5);Yes;;193;Stores the Reference Number 5. Reserved for custom use
+IS_GIFT;NUMBER(1,0);No;0 ;194;The column is used to identify whether an item is a gift or not. DB column allows either 1 or 0 values. Default is 0
+ADJUSTED_ORDER_QTY;NUMBER(13,4);Yes;;195;Adjusted Order quantity during intermediate processing that is different from the original order quantity and from the order quantity. Value in base UOM.
+PRE_RECEIPT_STATUS;VARCHAR2(3 CHAR);Yes;;196;Indicates the Order line's pre-receipt allocation status
+ALLOW_REVIVAL_RECEIPT_ALLOC;VARCHAR2(2 CHAR);No;'0' ;197;Indicates if an order line can be revived during shorting/cancellation flow.
+SEGMENT_NAME;VARCHAR2(15 CHAR);Yes;;198;Stores the Segment Name
+EFFECTIVE_RANK;VARCHAR2(100 CHAR);Yes;;199;Effective rank
+WM_RECEIPT_ALLOCATED;NUMBER(1,0);No;0 ;200;Flag that indicates whether this Order Line has been allocated against an ASN by WM.
+GIFT_CARD_VALUE;NUMBER(13,4);Yes;;201;This field is required to be passed to fulfillment system through DO interface. WM/SIF can decide to communicate the Gift Card value to Gift card activation system.
+REF_BOOLEAN1;NUMBER(1,0);No;0 ;202;Stores the Reference Boolean 1. Reserved for custom use.
+REF_BOOLEAN2;NUMBER(1,0);No;0 ;203;Stores the Reference Boolean 2. Reserved for custom use.
+REF_SYSCODE1;VARCHAR2(15 CHAR);Yes;;204;Stores the Reference Sys Code 1. Reserved for custom use.
+REF_SYSCODE2;VARCHAR2(15 CHAR);Yes;;205;Stores the Reference Sys Code 2. Reserved for custom use.
+REF_SYSCODE3;VARCHAR2(15 CHAR);Yes;;206;Stores the Reference Sys Code 3. Reserved for custom use.
+HARD_ALLOC_REASON_CODE;VARCHAR2(3 CHAR);Yes;;207;Hard-allocation reason log
+LOCKED;NUMBER(1,0);No;0 ;208;locked flag for order lines
